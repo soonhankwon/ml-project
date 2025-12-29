@@ -74,3 +74,27 @@ array4 = array2d[[0,1], 0:2]
 print('array2d[[0,1], 0:2] => ', array4.tolist()) # [[1,2], [4,5]]
 
 # 불린 인덱싱
+array3 = array1d[array1d > 5]
+print('array1d > 5 boolean indexing 결과 값: ', array3)
+
+val = array1d > 5
+print(val, type(val), val.shape)
+"""
+[False False False False False  True  True  True  True] <class 'numpy.ndarray'> (9,)
+"""
+boolean_indexes = np.array([False, False, False, False, False, True, True, True, True])
+array3 = array1d[boolean_indexes]
+print('boolean indexing filtering 결과: ', array3) # boolean indexing filtering 결과:  [6 7 8 9]
+
+target = []
+# 불린 인덱싱을 적용하지 않았을 경우
+for i in range(0, 9):
+    if array1d[i] > 5:
+        target.append(array1d[i])
+
+array_selected = np.array(target)
+print(array_selected) # [6 7 8 9]
+
+# Fancy indexing
+indexes = np.array([5,6,7,8])
+print(array1d[indexes]) # [6 7 8 9]
