@@ -1,7 +1,7 @@
 import array
 import numpy as np
 
-# ndarray 편하게 생성하기 - arrange, zeros, ones
+# ndarray 편하게 생성하기 - arange, zeros, ones
 sequence_array = np.arange(10)
 print(sequence_array) # [0 1 2 3 4 5 6 7 8 9]
 print(sequence_array.dtype, sequence_array.shape) # int64 (10,)
