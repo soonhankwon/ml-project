@@ -61,7 +61,7 @@ sort_indices_asc = np.argsort(score_array)
 print('성적 오름차순 정렬시 score_array의 인덱스:', sort_indices_asc)
 print('성적 오름차순으로 name_array의 이름출력', name_array[sort_indices_asc])
 """
-성적 오름차순 정렬시 score_array의 인덱스: [0 1]
-성적 오름차순으로 name_array의 이름출력 ['Soon' 'Kyu']
+성적 오름차순 정렬시 score_array의 인덱스: [2 3 4 0 1]
+성적 오름차순으로 name_array의 이름출력 ['Mike' 'Kate' 'Lee' 'Soon' 'Kyu']
 """
 
