@@ -162,4 +162,19 @@ print(type(titanic_pclass))
 print('titanic_df 데이터 건수:', titanic_df.shape[0])
 print('기본 설정인 dropna=True로 value_counts()')
 print(titanic_df['Embarked'].value_counts())
+"""
+Embarked
+S    644
+C    168
+Q     77
+"""
 print(titanic_df['Embarked'].value_counts(dropna=False))
+"""
+Embarked
+S      644
+C      168
+Q       77
+NaN      2
+"""
+
+print(titanic_df[['Pclass', 'Embarked']].value_counts())
