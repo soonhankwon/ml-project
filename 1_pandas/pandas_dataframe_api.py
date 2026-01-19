@@ -124,7 +124,7 @@ memory usage: 83.7+ KB
 None
 """
 
-# decribe(): 평균, 표준편차, 4분위 분포도
+# decribe(): 숫자형 컬럼의 평균, 표준편차, 4분위 분포도
 print(titanic_df.describe())
 """
        PassengerId    Survived      Pclass         Age       SibSp       Parch        Fare
@@ -138,3 +138,28 @@ min       1.000000    0.000000    1.000000    0.420000    0.000000    0.000000  
 max     891.000000    1.000000    3.000000   80.000000    8.000000    6.000000  512.329200
 """
 
+value_counts = titanic_df['Pclass'].value_counts()
+print(value_counts)
+"""
+Pclass
+3    491
+1    216
+2    184
+Name: count, dtype: int64
+"""
+
+titanic_pclass = titanic_df['Pclass'].head()
+"""
+0    3
+1    1
+2    3
+3    1
+4    3
+"""
+print(type(titanic_pclass))
+# <class 'pandas.core.series.Series'>
+
+print('titanic_df 데이터 건수:', titanic_df.shape[0])
+print('기본 설정인 dropna=True로 value_counts()')
+print(titanic_df['Embarked'].value_counts())
+print(titanic_df['Embarked'].value_counts(dropna=False))
