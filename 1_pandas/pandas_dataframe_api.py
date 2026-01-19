@@ -178,3 +178,15 @@ NaN      2
 """
 
 print(titanic_df[['Pclass', 'Embarked']].value_counts())
+"""
+Pclass  Embarked
+3       S           353
+2       S           164
+1       S           127
+        C            85
+3       Q            72
+        C            66
+2       C            17
+        Q             3
+1       Q             2
+"""
