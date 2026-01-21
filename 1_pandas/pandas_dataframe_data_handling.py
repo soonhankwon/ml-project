@@ -136,3 +136,51 @@ print(titanic_df.head(3))
 
 [3 rows x 15 columns]
 """
+
+# axis에 따른 삭제
+titanic_drop_df = titanic_df.drop('Age_0', axis=1)
+print(titanic_drop_df.head(3))
+"""
+   PassengerId  Survived  Pclass  ... Embarked Age_by_10  Family_No
+0            1         0       3  ...        S     320.0          2
+1            2         1       1  ...        C     480.0          2
+2            3         1       3  ...        S     360.0          1
+"""
+
+
+drop_result = titanic_df.drop(['Age_0', 'Age_by_10', 'Family_No'], axis=1, inplace=True)
+print('inplace=True로 drop 후 반환된 값:', drop_result)
+print(titanic_df.head(3))
+"""
+inplace=True로 drop 후 반환된 값: None <- inplace=True 경우 titanic_df 자체가 바뀜
+   PassengerId  Survived  Pclass  ...     Fare Cabin  Embarked
+0            1         0       3  ...   7.2500   NaN         S
+1            2         1       1  ...  71.2833   C85         C
+2            3         1       3  ...   7.9250   NaN         S
+"""
+
+# axis=0 일 경우 drop()은 row 방향으로 데이터를 삭제
+pd.set_option('display.width', 1000)
+pd.set_option('display.max_colwidth', 15)
+print('### before axis 0 drop ###')
+print(titanic_df.head(6))
+
+"""
+### before axis 0 drop ###
+   PassengerId  Survived  Pclass            Name     Sex  ...  Parch          Ticket     Fare Cabin  Embarked
+0            1         0       3  Braund, Mr....    male  ...      0       A/5 21171   7.2500   NaN         S
+1            2         1       1  Cumings, Mr...  female  ...      0        PC 17599  71.2833   C85         C
+2            3         1       3  Heikkinen, ...  female  ...      0  STON/O2. 31...   7.9250   NaN         S
+3            4         1       1  Futrelle, M...  female  ...      0          113803  53.1000  C123         S
+4            5         0       3  Allen, Mr. ...    male  ...      0          373450   8.0500   NaN         S
+5            6         0       3  Moran, Mr. ...    male  ...      0          330877   8.4583   NaN 
+"""
+
+titanic_df.drop([0,1,2], axis=0, inplace=True)
+print(titanic_df.head(3))
+"""
+   PassengerId  Survived  Pclass            Name     Sex  ...  Parch  Ticket     Fare Cabin  Embarked
+3            4         1       1  Futrelle, M...  female  ...      0  113803  53.1000  C123         S
+4            5         0       3  Allen, Mr. ...    male  ...      0  373450   8.0500   NaN         S
+5            6         0       3  Moran, Mr. ...    male  ...      0  330877   8.4583   NaN         Q
+"""
