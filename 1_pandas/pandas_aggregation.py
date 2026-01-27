@@ -104,6 +104,7 @@ Pclass
 3       74.0  0.42
 """
 
+# 서로 다른 컬럼에 서로 다른 aggregation 메소드를 적용할 경우 agg()내에 컬럼과 적용할 메소드를 Dict로 입력
 agg_format={'Age':'max', 'SibSp':'sum', 'Fare':'mean'}
 titanic_groupby = titanic_df.groupby('Pclass').agg(agg_format)
 print(titanic_groupby)
@@ -113,4 +114,40 @@ Pclass
 1       80.0     90  84.154687
 2       70.0     74  20.662183
 3       74.0    302  13.675550
+"""
+
+# agg내의 인자로 들어가는 Dict 객체에 동일한 Key를 가지는 두 개의 value가 있을 경우 마지막 value로 update됨
+agg_format={'Age':'max', 'Age':'mean', 'Fare':'mean'}
+titanic_groupby = titanic_df.groupby('Pclass').agg(agg_format)
+print(titanic_groupby)
+"""
+              Age       Fare
+Pclass                      
+1       38.233441  84.154687
+2       29.877630  20.662183
+3       25.140620  13.675550
+"""
+# named group by
+titanic_groupby = titanic_df.groupby(['Pclass']).agg(age_max=('Age', 'max'), age_mean=('Age', 'mean'), fare_mean=('Fare', 'mean'))
+print(titanic_groupby)
+"""
+        age_max   age_mean  fare_mean
+Pclass                               
+1          80.0  38.233441  84.154687
+2          70.0  29.877630  20.662183
+3          74.0  25.140620  13.675550
+"""
+
+titanic_groupby = titanic_df.groupby('Pclass').agg(
+    age_max = pd.NamedAgg(column='Age', aggfunc='max'),
+    age_mean = pd.NamedAgg(column='Age', aggfunc='mean'),
+    fare_mean = pd.NamedAgg(column='Fare', aggfunc='mean')
+)
+print(titanic_groupby)
+"""
+        age_max   age_mean  fare_mean
+Pclass                               
+1          80.0  38.233441  84.154687
+2          70.0  29.877630  20.662183
+3          74.0  25.140620  13.675550
 """
