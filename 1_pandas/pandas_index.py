@@ -1,5 +1,4 @@
 import pandas as pd
-from pandas.core import series
 
 titanic_df = pd.read_csv('./titanic_ml_dataset/Titanic_train.csv', sep=',')
 
