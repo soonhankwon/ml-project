@@ -59,3 +59,11 @@ def get_category(age):
 
 titanic_df['Age_cat'] = titanic_df['Age'].apply(lambda x: get_category(x))
 print(titanic_df[['Age', 'Age_cat']].head())
+"""
+    Age      Age_cat
+0  22.0      Student
+1  38.0        Adult
+2  26.0  Young Adult
+3  35.0  Young Adult
+4  35.0  Young Adult
+"""
