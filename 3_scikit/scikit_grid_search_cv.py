@@ -40,7 +40,19 @@ grid_dtree.fit(X_train, y_train)
 
 # GridSearchCV 결과는 cv_results_ 라는 딕셔너리로 저장됨. 이를 DataFrame으로 변환
 
-grid_dtree.cv_results_
+scores_df = pd.DataFrame(grid_dtree.cv_results_)
+scores_df[['params', 'mean_test_score', 'rank_test_score', \
+           'split0_test_score', 'split1_test_score', 'split2_test_score']]
+print(scores_df)
+"""
+   mean_fit_time  std_fit_time  mean_score_time  ...  split4_train_score  mean_train_score  std_train_score
+0       0.000181      0.000006         0.000119  ...            0.697917          0.700000         0.004167
+1       0.000171      0.000002         0.000111  ...            0.697917          0.700000         0.004167
+2       0.000207      0.000029         0.000129  ...            0.968750          0.958333         0.013176
+3       0.000182      0.000013         0.000107  ...            0.968750          0.958333         0.013176
+4       0.000212      0.000060         0.000121  ...            0.989583          0.977083         0.010206
+5       0.000188      0.000012         0.000113  ...            0.989583          0.977083         0.010206
+"""
 
 print('GridSearchCV 최적 파라미터:', grid_dtree.best_params_)
 print('GridSearchCV 최고 정확도: {0: 4f}'.format(grid_dtree.best_score_))
