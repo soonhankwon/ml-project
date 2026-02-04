@@ -187,3 +187,39 @@ for train_index, test_index in skfold.split(features, label):
     # split()으로 반환된 인덱스를 이용하여 학습용, 검증용 테스트 데이터 추출
     X_train, X_test = features[train_index], features[test_index]
     y_train, y_test = label[train_index], label[test_index]
+    # 학습 및 예측
+    dt_clf.fit(X_train, y_train)
+    pred = dt_clf.predict(X_test)
+
+    # 반복시마다 정확도 측정
+    n_iter += 1
+    accuracy = np.round(accuracy_score(y_test, pred), 4)
+    train_size = X_train.shape[0]
+    test_size = X_test.shape[0]
+    print('#{0} 교차 검증 정확도 :{1}, 학습 데이터 크기: {2}, 검증 데이터 크기: {3}'
+          .format(n_iter, accuracy, train_size, test_size))
+    print('#{0} 검증 세트 인덱스:{1}'.format(n_iter,test_index))
+    cv_accuracy.append(accuracy)
+
+"""
+#1 검증 세트 인덱스:[  0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  50
+  51  52  53  54  55  56  57  58  59  60  61  62  63  64  65  66 100 101
+ 102 103 104 105 106 107 108 109 110 111 112 113 114 115]
+#2 교차 검증 정확도 :0.94, 학습 데이터 크기: 100, 검증 데이터 크기: 50
+#2 검증 세트 인덱스:[ 17  18  19  20  21  22  23  24  25  26  27  28  29  30  31  32  33  67
+  68  69  70  71  72  73  74  75  76  77  78  79  80  81  82 116 117 118
+ 119 120 121 122 123 124 125 126 127 128 129 130 131 132]
+#3 교차 검증 정확도 :0.98, 학습 데이터 크기: 100, 검증 데이터 크기: 50
+#3 검증 세트 인덱스:[ 34  35  36  37  38  39  40  41  42  43  44  45  46  47  48  49  83  84
+  85  86  87  88  89  90  91  92  93  94  95  96  97  98  99 133 134 135
+ 136 137 138 139 140 141 142 143 144 145 146 147 148 149]
+"""
+
+# 교차 검증별 정확도 및 평균 정확도 계산
+print('\n## 교차 검증별 정확도:', np.round(cv_accuracy, 4))
+print('## 평균 검증 정확도:', np.round(np.mean(cv_accuracy), 4))
+
+"""
+## 교차 검증별 정확도: [0.98 0.94 0.98]
+## 평균 검증 정확도: 0.9667
+"""
