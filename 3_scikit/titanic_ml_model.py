@@ -1,4 +1,3 @@
-from random import Random
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -343,6 +342,7 @@ parameters = {
     'min_samples_leaf': [1,5,8]
 }
 
+# 36 * 5 = 180
 grid_dclf = GridSearchCV(dt_clf, param_grid=parameters, scoring='accuracy', cv=5)
 grid_dclf.fit(X_train, y_train)
 
@@ -354,3 +354,9 @@ best_dclf = grid_dclf.best_estimator_
 dpredictions = best_dclf.predict(X_test)
 accuracy = accuracy_score(y_test, dpredictions)
 print('테스트 세트에서의 DeicisionTreeClassifier 정확도: {0:.4f}'.format(accuracy))
+
+"""
+GridSearchCV 최적 하이퍼 파라미터:  {'max_depth': 3, 'min_samples_leaf': 5, 'min_samples_split': 2}
+GridSearchCV 최고 정확도: 0.7992
+테스트 세트에서의 DeicisionTreeClassifier 정확도: 0.8715
+"""
