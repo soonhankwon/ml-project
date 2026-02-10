@@ -8,7 +8,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score, f1_score, roc_auc_score
 
 # 1. 데이터 로드 (Train + Test 합쳐서 전처리)
-# 이렇게 해야 One-Hot Encoding 시 컬럼 개수가 달라지는 문제를 방지할 수 있습니다.
+# One-Hot Encoding 시 컬럼 개수가 달라지는 문제를 방지
 train_df = pd.read_csv('./spaceship_titanic_dataset/train.csv')
 test_df = pd.read_csv('./spaceship_titanic_dataset/test.csv')
 
@@ -32,15 +32,15 @@ def preprocessing(df):
     # 나이: 중앙값
     df['Age'] = df['Age'].fillna(df['Age'].median())
 
-    # Cabin: 결측치 임시 처리 (분해를 위해)
+    # Cabin: 결측치 임시 처리
     df['Cabin'] = df['Cabin'].fillna('N/-1/N')
 
-    # (2) Feature Engineering (파생 변수 생성)
+    # (2) Feature Engineering
     # Cabin 분해: Deck(구역), Num(방번호), Side(좌/우)
     df[['Deck', 'Num', 'Side']] = df['Cabin'].str.split('/', expand=True)
     df['Num'] = df['Num'].astype(int) # 숫자로 변환
 
-    # 총 소비액 & 소비 여부 (강력한 피처)
+    # 총 소비액 & 소비 여부
     df['TotalSpend'] = df[billing_features].sum(axis=1)
     df['NoSpending'] = (df['TotalSpend'] == 0).astype(int)
 
@@ -54,9 +54,8 @@ def preprocessing(df):
     df = df.drop(['PassengerId', 'Name', 'Cabin', 'Group'], axis=1)
 
     # (4) 인코딩 (One-Hot Encoding)
-    # 결정트리 계열은 One-Hot Encoding이 LabelEncoder보다 정보를 더 잘 활용하는 경우가 많습니다.
     dummy_cols = ['HomePlanet', 'CryoSleep', 'Destination', 'VIP', 'Deck', 'Side']
-    # drop_first=True로 다중공선성 문제 완화 (트리 모델에선 필수는 아니지만 습관적으로 좋음)
+    # drop_first=True로 다중공선성 문제 완화
     df = pd.get_dummies(df, columns=dummy_cols, drop_first=True, dtype=int)
 
     return df
@@ -69,17 +68,15 @@ train_df_proc = all_data_processed[all_data_processed['dataset_type'] == 'train'
 test_df_proc = all_data_processed[all_data_processed['dataset_type'] == 'test']
 
 # 학습 데이터 준비
-# Transported는 bool 타입이므로 int로 변환 (0/1)
+# Transported는 bool 타입이므로 int로 변환
 y_train_full = train_df['Transported'].astype(int)
 X_train_full = train_df_proc.drop(['Transported', 'dataset_type'], axis=1)
 X_test_submit = test_df_proc.drop(['Transported', 'dataset_type'], axis=1)
 
-# 검증 데이터 분리 (8:2)
+# 검증 데이터 분리
 X_train, X_val, y_train, y_val = train_test_split(X_train_full, y_train_full, test_size=0.2, random_state=11)
 
-# --- 3. 모델 학습 및 평가 ---
-
-# 평가 함수
+# 3. 모델 학습 및 평가
 def get_clf_eval(y_test, pred, title):
     confusion = confusion_matrix(y_test, pred)
     accuracy = accuracy_score(y_test, pred)
@@ -104,7 +101,6 @@ rf_pred = rf_clf.predict(X_val)
 get_clf_eval(y_val, rf_pred, 'Random Forest (Basic)')
 
 # (2) RandomForest 하이퍼파라미터 튜닝 (GridSearchCV)
-# 트리의 깊이와 개수를 조절하여 과적합을 막고 성능을 높입니다.
 params = {
     'n_estimators': [100, 200],  # 트리 개수
     'max_depth': [8, 10, 12],    # 트리 깊이 제한 (너무 깊으면 과적합)
@@ -124,7 +120,7 @@ best_rf = grid_cv.best_estimator_
 best_pred = best_rf.predict(X_val)
 get_clf_eval(y_val, best_pred, 'Random Forest (Tuned)')
 
-# (3) 피처 중요도 시각화 (모델이 무엇을 중요하게 봤는지 확인)
+# (3) 피처 중요도 시각화
 ftr_importances_values = best_rf.feature_importances_
 ftr_importances = pd.Series(ftr_importances_values, index=X_train.columns)
 ftr_top20 = ftr_importances.sort_values(ascending=False)[:20]
@@ -135,7 +131,6 @@ sns.barplot(x=ftr_top20, y=ftr_top20.index)
 plt.show()
 
 # (4) 제출 파일 생성
-# best_rf로 전체 데이터 재학습 후 예측
 best_rf.fit(X_train_full, y_train_full)
 test_pred = best_rf.predict(X_test_submit)
 
