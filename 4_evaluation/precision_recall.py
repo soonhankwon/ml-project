@@ -213,7 +213,6 @@ print('샘플 임계값별 재현율:', np.round(recalls[thr_index], 3))
 """
 
 import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
 
 def precision_recall_curve_plot(y_test, pred_proba_c1):
     # threshold ndarray와 이 threshold에 따른 정밀도, 재현율 ndarray 추출
