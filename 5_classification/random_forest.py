@@ -1,4 +1,3 @@
-import random
 import pandas as pd
 
 def get_new_feature_name_df(old_feature_name_df):
