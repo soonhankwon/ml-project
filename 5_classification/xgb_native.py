@@ -1,4 +1,3 @@
-from cProfile import label
 import xgboost as xgb
 
 print(xgb.__version__) # 3.1.3
