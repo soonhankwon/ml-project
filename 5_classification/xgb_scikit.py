@@ -10,11 +10,11 @@ labels = dataset.target
 cancer_df = pd.DataFrame(data=features, columns=dataset.feature_names)
 cancer_df['target'] = labels
 
-X_feature = cancer_df.iloc[:, :-1]
+X_features = cancer_df.iloc[:, :-1]
 y_label = cancer_df.iloc[:, -1]
 
 # 전체 데이터 중 80% 학습용 데이터, 20% 테스트용 데이터 추출
-X_train, X_test, y_train, y_test = train_test_split(X_feature, y_label, test_size=0.2, random_state=156)
+X_train, X_test, y_train, y_test = train_test_split(X_features, y_label, test_size=0.2, random_state=156)
 # 위에서 만든 X_train, y_train을 다시 쪼개서 90%는 학습과 10%는 검증용 데이터로 분리
 X_tr, X_val, y_tr, y_val = train_test_split(X_train, y_train, test_size=0.1, random_state=156)
 
