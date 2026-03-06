@@ -28,3 +28,30 @@ print('best:', best_01)
 best: {'x': np.float64(-4.0), 'y': np.float64(12.0)}
 """
 
+# fmin()에 인자로 들어가는 Trials 객체의 result 속성에 파이썬 리스트로 "목적 함수 반환값"들이 저장됨
+# 리스트 내부의 개별 원소는 {'loss':함수 반환값, 'status': 반환 상태값}와 같은 딕셔너리임
+print(trial_val.results)
+"""
+[{'loss': -64.0, 'status': 'ok'}, {'loss': -184.0, 'status': 'ok'}, {'loss': 56.0, 'status': 'ok'}, {'loss': -224.0, 'status': 'ok'}, {'loss': 61.0, 'status': 'ok'}]
+"""
+
+# Trials 객체의 vals 속성에 {'입력변수명': 개별 수행 시마다 입력된 값 리스트} 형태로 저장됨
+print(trial_val.vals)
+"""
+{'x': [np.float64(-6.0), np.float64(-4.0), np.float64(4.0), np.float64(-4.0), np.float64(9.0)], 'y': [np.float64(5.0), np.float64(10.0), np.float64(-2.0), np.float64(12.0), np.float64(1.0)]}
+"""
+
+import pandas as pd
+
+# result에서 loss 키 값에 해당하는 밸류들을 추출하여 list 생성
+losses = [loss_dict['loss'] for loss_dict in trial_val.results]
+
+# DataFrame 으로 생성
+result_df = pd.DataFrame({'x': trial_val.vals['x'], 'y': trial_val.vals['y'], 'losses': losses})
+print(result_df.head(3))
+"""
+     x     y  losses
+0 -6.0   5.0   -64.0
+1 -4.0  10.0  -184.0
+2  4.0  -2.0    56.0
+"""
