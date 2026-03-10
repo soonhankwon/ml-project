@@ -3,7 +3,6 @@ import hyperopt
 print(hyperopt.__version__) # 0.2.7
 
 from hyperopt import hp
-from hyperopt import STATUS_OK
 from hyperopt import fmin, tpe, Trials
 import numpy as np
 
@@ -15,7 +14,7 @@ def objective_fun(search_space):
     x = search_space['x']
     y = search_space['y']
     retval = x**2 - 20*y
-    return retval
+    return retval # return {'loss': retval, 'status': 'STATUS_OK'}
 
 # 입력 결괏값을 저장한 Trials 객체값 생성
 trial_val = Trials()
@@ -23,9 +22,13 @@ trial_val = Trials()
 # 목적 함수의 최솟값을 반환하는 최적 입력 변숫값을 5번의 입력값 시도(max_evals=5)로 찾아냄
 best_01 = fmin(fn=objective_fun, space=search_space, algo=tpe.suggest, max_evals=5, trials=trial_val, rstate=np.random.default_rng(seed=0))
 
+best_02 = fmin(fn=objective_fun, space=search_space, algo=tpe.suggest, max_evals=20, trials=trial_val)
+
 print('best:', best_01)
+print('best:', best_02)
 """
 best: {'x': np.float64(-4.0), 'y': np.float64(12.0)}
+best: {'x': np.float64(5.0), 'y': np.float64(13.0)}
 """
 
 # fmin()에 인자로 들어가는 Trials 객체의 result 속성에 파이썬 리스트로 "목적 함수 반환값"들이 저장됨
