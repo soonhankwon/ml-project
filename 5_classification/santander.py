@@ -1,7 +1,5 @@
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib
 
 cust_df = pd.read_csv("./santander-customer-satisfaction/train.csv", encoding='latin-1')
 print('dataset shape:', cust_df.shape)
@@ -82,7 +80,7 @@ print(f'피처 데이터 shape:{X_features.shape}')
 피처 데이터 shape:(76020, 369)
 """
 
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import cross_val_score, train_test_split
 
 X_train, X_test, y_train, y_test = train_test_split(X_features, y_labels, test_size=0.2, random_state=0, stratify=y_labels)
 train_cnt = y_train.count()
@@ -119,7 +117,7 @@ from sklearn.metrics import roc_auc_score
 xgb_clf = XGBClassifier(
     n_estimators=500, learning_rate=0.05, random_state=156,
     eval_metric='auc',
-    callbacks=[EarlyStopping(rounds=100, metric_name='auc', maximize=False)],
+    callbacks=[EarlyStopping(rounds=100, metric_name='auc', maximize=True)],
 )
 xgb_clf.fit(X_tr, y_tr, eval_set=[(X_val, y_val)], verbose=True)
 xgb_roc_score = roc_auc_score(y_test, xgb_clf.predict_proba(X_test)[:, 1])
@@ -127,3 +125,106 @@ print(f'ROC AUC: {xgb_roc_score:.4f}')
 """
 ROC AUC: 0.8020
 """
+
+from hyperopt import hp
+
+# max_depth는 5에서 15까지 1간격, min_child_weight는 1에서 6까지 1간격
+# colsample_bytree는 0.5에서 0.95 사이, learning_rate는 0.01에서 0.2사이 정규분포값으로 검색
+xgb_search_space = {
+    'max_depth': hp.quniform('max_depth', 5, 15, 1),
+    'min_child_weight': hp.quniform('min_child_weight', 1, 6, 1),
+    'colsample_bytree': hp.uniform('colsample_bytree', 0.5, 0.95),
+    'learning_rate': hp.uniform('learning_rate', 0.01, 0.2)
+}
+
+from sklearn.model_selection import KFold
+
+# 목적함수 설정
+# 추후 fmin() 에서 입력된 search_space값으로 XGBClassifier 교차 검증 학습 후 -1 * roc_auc 평균값 반환
+def objective_func(search_space):
+    # 수행 시간 절약을 위해 n_estimators는 100으로 축소, early stopping은 30회로 설정
+    xgb_clf = XGBClassifier(
+        n_estimators=100, 
+        learning_rate=search_space['learning_rate'], 
+        max_depth=int(search_space['max_depth']),
+        min_child_weight=int(search_space['min_child_weight']),
+        colsample_bytree=search_space['colsample_bytree'],
+        eval_metric='auc',
+        callbacks=[EarlyStopping(rounds=30, metric_name='auc', maximize=True)])
+
+    # 3개 K-fold 방식으로 평가된 roc_auc 지표를 담는 list
+    roc_auc_list = []
+
+    # 3개 K-fold 방식 적용
+    kf = KFold(n_splits=3)
+
+    # X_train을 다시 학습과 검증용 데이터로 분리
+    for tr_index, val_index in kf.split(X_train):
+        # kf.split(X_train)으로 추출된 학습과 검증 index값으로 학습과 검증 데이터 세트 분리
+        X_tr, y_tr = X_train.iloc[tr_index], y_train.iloc[tr_index]
+        X_val, y_val = X_train.iloc[val_index], y_train.iloc[val_index]
+        
+        # 추출된 학습과 검증 데이터로 학습 수행
+        xgb_clf.fit(X_tr, y_tr, eval_set=[(X_val, y_val)], verbose=True)
+
+        # 1로 예측한 확률값 추출후 roc auc 계산, 평균 roc auc 계산을 위해 list에 결과값을 담음
+        score = roc_auc_score(y_val, xgb_clf.predict_proba(X_val)[:, 1])
+        roc_auc_list.append(score)
+
+    # 3개 K-fold로 계산된 roc_auc의 평균값을 반환
+    # HyperOpt는 목적함수의 최소값을 위한 입력값을 찾으므로 -1을 곱한뒤 리턴
+    return -1 * np.mean(roc_auc_list)
+
+from hyperopt import fmin, tpe, Trials
+
+trials = Trials()
+
+# fmin() 함수를 호출, max_evals 지정된 횟수만큼 반복 후 목적함수의 최소값을 가지는 최적 입력값 추출
+best = fmin(
+    fn=objective_func,
+    space=xgb_search_space,
+    algo=tpe.suggest,
+    max_evals=50, # 최대 반복 횟수
+    trials=trials
+)
+
+print('best:', best)
+"""
+best: {'colsample_bytree': np.float64(0.9446553138681885), 'learning_rate': np.float64(0.03910180288653287), 'max_depth': np.float64(6.0), 'min_child_weight': np.float64(6.0)}
+"""
+
+# n_estimator를 500 증가 후 최적으로 찾은 하이퍼 파라미터 기반으로 학습, 예측 수행
+xgb_clf = XGBClassifier(
+    n_estimators=500, 
+    learning_rate=round(best['learning_rate'], 5),
+    max_depth=int(best['max_depth']),
+    min_child_weight=int(best['min_child_weight']),
+    colsample_bytree=round(best['colsample_bytree'], 5),
+    eval_metric='auc',
+    callbacks=[EarlyStopping(rounds=100, metric_name='auc', maximize=True)],
+)
+
+xgb_clf.fit(X_tr, y_tr, eval_set=[(X_tr, y_tr)], verbose=True)
+xgb_roc_score = roc_auc_score(y_test, xgb_clf.predict_proba(X_test)[:, 1])
+print(f'ROC AUC: {xgb_roc_score:.4f}')
+"""
+ROC AUC: 0.8198
+"""
+
+from xgboost import plot_importance
+import matplotlib.pyplot as plt
+
+fig, ax = plt.subplots(figsize=(10, 8))
+plot_importance(xgb_clf, ax=ax, max_num_features=20, height=0.4)
+plt.show()
+
+# 캐글 제출용 CSV 생성
+test_df = pd.read_csv("./santander-customer-satisfaction/test.csv", encoding='latin-1')
+test_ids = test_df['ID'].copy()
+test_df['var3'] = test_df['var3'].replace(-999999, 2)
+test_df.drop('ID', axis=1, inplace=True)
+X_test_sub = test_df
+pred_proba = xgb_clf.predict_proba(X_test_sub)[:, 1]
+submission = pd.DataFrame({'ID': test_ids, 'TARGET': pred_proba})
+submission.to_csv("./santander-customer-satisfaction/submission.csv", index=False)
+print(f'제출 파일 생성 완료: submission.csv ({len(submission)} rows)')
