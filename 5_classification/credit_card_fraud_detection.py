@@ -228,8 +228,12 @@ precision_recall_curve_plot(y_test, lr_clf.predict_proba(X_test)[:, 1])
 lgbm_clf = LGBMClassifier(n_estimators=1000, num_leaves=64, n_jobs=-1, boost_from_average=False)
 get_model_train_eval(lgbm_clf, ftr_train=X_train_over, ftr_test=X_test, tgt_train=y_train_over, tgt_test=y_test)
 """
+Logistic Regression
 오차 행렬
 [[83071  2224]
  [   14   132]]
 정확도: 0.9738, 정밀도: 0.0560, 재현율: 0.9041, F1: 0.1055, AUC: 0.9684
+
+LightGBM
+정확도: 0.9994, 정밀도: 0.8333, 재현율: 0.8219, F1: 0.8276, AUC: 0.9850
 """
