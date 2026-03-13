@@ -33,12 +33,29 @@ from sklearn.preprocessing import StandardScaler
 #     df_copy.drop(['Time', 'Amount'], axis=1, inplace=True)
 #     return df_copy
 
+def get_outlier(df=None, column=None, weight=1.5):
+    # fraud에 해당하는 column 데이터만 추출, 1/4 분위와 3/4 분위 지점을 np.percentile로 구함. 
+    fraud = df[df['Class']==1][column]
+    quantile_25 = np.percentile(fraud.values, 25)
+    quantile_75 = np.percentile(fraud.values, 75)
+    # IQR을 구하고, IQR에 1.5를 곱하여 최대값과 최소값 지점 구함. 
+    iqr = quantile_75 - quantile_25
+    iqr_weight = iqr * weight
+    lowest_val = quantile_25 - iqr_weight
+    highest_val = quantile_75 + iqr_weight
+    # 최대값 보다 크거나, 최소값 보다 작은 값을 아웃라이어로 설정하고 DataFrame index 반환. 
+    outlier_index = fraud[(fraud < lowest_val) | (fraud > highest_val)].index
+    return outlier_index
+
+# get_processed_df()를 로그 변환 후 V14 피처의 이상치 데이터를 삭제하는 로직으로 변경
 def get_preprocessed_df(df=None):
     df_copy = df.copy()
-    # 넘파이의 log1p()를 이용하여 Amount를 로그 변환
     amount_n = np.log1p(df_copy['Amount'])
     df_copy.insert(0, 'Amount_Scaled', amount_n)
-    df_copy.drop(['Time', 'Amount'], axis=1, inplace=True)
+    df_copy.drop(['Time','Amount'], axis=1, inplace=True)
+    # 이상치 데이터 삭제하는 로직 추가
+    outlier_index = get_outlier(df=df_copy, column='V14', weight=1.5)
+    df_copy.drop(outlier_index, axis=0, inplace=True)
     return df_copy
 
 from sklearn.model_selection import train_test_split
@@ -130,49 +147,37 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 plt.figure(figsize=(8, 4))
+plt.subplot(1, 2, 1)
+plt.title('Amount (원본)')
 plt.xticks(range(0, 30000, 1000), rotation=60)
 sns.histplot(card_df['Amount'], bins=100, kde=True)
+
+plt.subplot(1, 2, 2)
+plt.title('Amount_Scaled (log1p 변환)')
+card_df_preprocessed = get_preprocessed_df(card_df)
+sns.histplot(card_df_preprocessed['Amount_Scaled'], bins=100, kde=True)
+plt.tight_layout()
 # plt.show()
 
 # Amount를 정규분포 형태로 변환 후 회귀 및 LightGBM 수행
 X_train, X_test, y_train, y_test = get_train_test_dataset(card_df)
+
+plt.figure(figsize=(9, 9))
+card_df_preprocessed = get_preprocessed_df(card_df)
+corr = card_df_preprocessed.corr()
+sns.heatmap(corr, cmap='RdBu')
+# plt.show()
+
+outlier_index = get_outlier(df=card_df, column='V14', weight=1.5)
+print('이상치 데이터 인덱스:', outlier_index)
+"""
+이상치 데이터 인덱스: Index([8296, 8615, 9035, 9252], dtype='int64')
+"""
+
 print('### 로지스틱 회귀 예측 성능 ###')
 lr_clf = LogisticRegression()
 get_model_train_eval(lr_clf, ftr_train=X_train, ftr_test=X_test, tgt_train=y_train, tgt_test=y_test)
-"""
-오차 행렬
-[[85283    12]
- [   50    98]]
-정확도: 0.9993, 정밀도: 0.8909, 재현율: 0.6622, F1: 0.7597, AUC: 0.9698
-"""
 
 print('### LightGBM 예측 성능 ###')
 lgbm_clf = LGBMClassifier(n_estimators=1000, num_leaves=64, n_jobs=-1, boost_from_average=False)
 get_model_train_eval(lgbm_clf, ftr_train=X_train, ftr_test=X_test, tgt_train=y_train, tgt_test=y_test)
-"""
-오차 행렬
-[[85291     4]
- [   28   120]]
-정확도: 0.9996, 정밀도: 0.9677, 재현율: 0.8108, F1: 0.8824, AUC: 0.9805
-"""
-
-X_train, X_test, y_train, y_test = get_train_test_dataset(card_df)
-print('### 로지스틱 회귀 예측 성능 ###')
-lr_clf = LogisticRegression()
-get_model_train_eval(lr_clf, ftr_train=X_train, ftr_test=X_test, tgt_train=y_train, tgt_test=y_test)
-"""
-오차 행렬
-[[85277    18]
- [   45   103]]
-정확도: 0.9993, 정밀도: 0.8512, 재현율: 0.6959, F1: 0.7658, AUC: 0.9718
-"""
-
-print('### LightGBM 예측 성능 ###')
-lgbm_clf = LGBMClassifier(n_estimators=1000, num_leaves=64, n_jobs=-1, boost_from_average=False)
-get_model_train_eval(lgbm_clf, ftr_train=X_train, ftr_test=X_test, tgt_train=y_train, tgt_test=y_test)
-"""
-오차 행렬
-[[85288     7]
- [   26   122]]
-정확도: 0.9996, 정밀도: 0.9457, 재현율: 0.8243, F1: 0.8809, AUC: 0.9703
-"""
