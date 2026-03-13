@@ -104,3 +104,11 @@ get_model_train_eval(lgbm_clf, ftr_train=X_train, ftr_test=X_test, tgt_train=y_t
  [   24   124]]
 정확도: 0.9996, 정밀도: 0.9466, 재현율: 0.8378, F1: 0.8889, AUC: 0.9763
 """
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+plt.figure(figsize=(8, 4))
+plt.xticks(range(0, 30000, 1000), rotation=60)
+sns.histplot(card_df['Amount'], bins=100, kde=True)
+plt.show()
