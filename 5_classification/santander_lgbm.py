@@ -3,7 +3,7 @@ import pandas as pd
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import train_test_split
 
-cust_df = pd.read_csv("./santander-customer-satisfaction/train.csv", encoding='latin-1')
+cust_df = pd.read_csv("./santander_customer_satisfaction/train.csv", encoding='latin-1')
 
 # var3 피처값 대체 및 ID 피처 드롭
 cust_df['var3'] = cust_df['var3'].replace(-999999, 2)

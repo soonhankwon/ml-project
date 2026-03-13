@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-cust_df = pd.read_csv("./santander-customer-satisfaction/train.csv", encoding='latin-1')
+cust_df = pd.read_csv("./santander_customer_satisfaction/train.csv", encoding='latin-1')
 print('dataset shape:', cust_df.shape)
 print(cust_df.head(3))
 """
