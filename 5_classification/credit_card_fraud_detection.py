@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 card_df = pd.read_csv("./creditcard_2013/creditcard.csv")
 print(card_df.head(3))
@@ -15,9 +16,17 @@ print(card_df.shape)
 
 # 원본 DataFrame은 유지하고 데이터 가공을 위한 DataFrame을 복사하여 반환
 # 인자로 입력받은 DataFrame을 복사한 뒤 Time 컬럼만 삭제하고 복사된 DataFrame을 반환
+# def get_preprocessed_df(df=None):
+#     df_copy = df.copy()
+#     df_copy.drop('Time', axis=1, inplace=True)
+#     return df_copy
+
 def get_preprocessed_df(df=None):
     df_copy = df.copy()
-    df_copy.drop('Time', axis=1, inplace=True)
+    # 넘파이의 log1p()를 이용하여 Amount를 로그 변환
+    amount_n = np.log1p(df_copy['Amount'])
+    df_copy.insert(0, 'Amount_Scaled', amount_n)
+    df_copy.drop(['Time', 'Amount'], axis=1, inplace=True)
     return df_copy
 
 from sklearn.model_selection import train_test_split
@@ -71,11 +80,11 @@ def get_clf_eval(y_test, pred=None, pred_proba=None):
 from sklearn.linear_model import LogisticRegression
 
 lr_clf = LogisticRegression(max_iter=1000)
-lr_clf.fit(X_train, y_train)
-lr_pred = lr_clf.predict(X_test)
-lr_pred_proba = lr_clf.predict_proba(X_test)[:, 1]
+# lr_clf.fit(X_train, y_train)
+# lr_pred = lr_clf.predict(X_test)
+# lr_pred_proba = lr_clf.predict_proba(X_test)[:, 1]
 
-get_clf_eval(y_test, lr_pred, lr_pred_proba)
+# get_clf_eval(y_test, lr_pred, lr_pred_proba)
 """
 오차 행렬
 [[85281    14]
@@ -97,7 +106,7 @@ from lightgbm import LGBMClassifier
 # LightGBM 학습/예측/평가
 # boost_from_average: True가 Default 레이블 값이 극도로 불균형한 경우 False가 유리
 lgbm_clf = LGBMClassifier(n_estimators=1000, num_leaves=64, n_jobs=1, boost_from_average=False)
-get_model_train_eval(lgbm_clf, ftr_train=X_train, ftr_test=X_test, tgt_train=y_train, tgt_test=y_test)
+# get_model_train_eval(lgbm_clf, ftr_train=X_train, ftr_test=X_test, tgt_train=y_train, tgt_test=y_test)
 """
 오차 행렬
 [[85288     7]
@@ -111,4 +120,59 @@ import matplotlib.pyplot as plt
 plt.figure(figsize=(8, 4))
 plt.xticks(range(0, 30000, 1000), rotation=60)
 sns.histplot(card_df['Amount'], bins=100, kde=True)
-plt.show()
+# plt.show()
+
+from sklearn.preprocessing import StandardScaler
+# 사이킷런의 StandardScaler를 이용하여 정규분포 형태로 Amount 피처값 변환하는 로직으로 수정
+def get_preprocessed_df(df=None):
+    df_copy = df.copy()
+    scaler = StandardScaler()
+    amount_n = scaler.fit_transform(df_copy['Amount'].values.reshape(-1, 1))\
+    # 변환된 Amount를 Amount_Scaled로 피처명 변경후 DataFrame 맨 앞 컬럼으로 입력
+    df_copy.insert(0, 'Amount_Scaled', amount_n)
+    # 기존 Time, Amount 피처 삭제
+    df_copy.drop(['Time', 'Amount'], axis=1, inplace=True)
+    return df_copy
+
+# Amount를 정규분포 형태로 변환 후 회귀 및 LightGBM 수행
+X_train, X_test, y_train, y_test = get_train_test_dataset(card_df)
+print('### 로지스틱 회귀 예측 성능 ###')
+lr_clf = LogisticRegression()
+get_model_train_eval(lr_clf, ftr_train=X_train, ftr_test=X_test, tgt_train=y_train, tgt_test=y_test)
+"""
+오차 행렬
+[[85283    12]
+ [   50    98]]
+정확도: 0.9993, 정밀도: 0.8909, 재현율: 0.6622, F1: 0.7597, AUC: 0.9698
+"""
+
+print('### LightGBM 예측 성능 ###')
+lgbm_clf = LGBMClassifier(n_estimators=1000, num_leaves=64, n_jobs=-1, boost_from_average=False)
+get_model_train_eval(lgbm_clf, ftr_train=X_train, ftr_test=X_test, tgt_train=y_train, tgt_test=y_test)
+"""
+오차 행렬
+[[85291     4]
+ [   28   120]]
+정확도: 0.9996, 정밀도: 0.9677, 재현율: 0.8108, F1: 0.8824, AUC: 0.9805
+"""
+
+X_train, X_test, y_train, y_test = get_train_test_dataset(card_df)
+print('### 로지스틱 회귀 예측 성능 ###')
+lr_clf = LogisticRegression()
+get_model_train_eval(lr_clf, ftr_train=X_train, ftr_test=X_test, tgt_train=y_train, tgt_test=y_test)
+"""
+오차 행렬
+[[85277    18]
+ [   45   103]]
+정확도: 0.9993, 정밀도: 0.8512, 재현율: 0.6959, F1: 0.7658, AUC: 0.9718
+"""
+
+print('### LightGBM 예측 성능 ###')
+lgbm_clf = LGBMClassifier(n_estimators=1000, num_leaves=64, n_jobs=-1, boost_from_average=False)
+get_model_train_eval(lgbm_clf, ftr_train=X_train, ftr_test=X_test, tgt_train=y_train, tgt_test=y_test)
+"""
+오차 행렬
+[[85288     7]
+ [   26   122]]
+정확도: 0.9996, 정밀도: 0.9457, 재현율: 0.8243, F1: 0.8809, AUC: 0.9703
+"""
