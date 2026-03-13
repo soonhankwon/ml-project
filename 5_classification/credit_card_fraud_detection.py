@@ -127,7 +127,7 @@ from sklearn.preprocessing import StandardScaler
 def get_preprocessed_df(df=None):
     df_copy = df.copy()
     scaler = StandardScaler()
-    amount_n = scaler.fit_transform(df_copy['Amount'].values.reshape(-1, 1))\
+    amount_n = scaler.fit_transform(df_copy['Amount'].values.reshape(-1, 1))
     # 변환된 Amount를 Amount_Scaled로 피처명 변경후 DataFrame 맨 앞 컬럼으로 입력
     df_copy.insert(0, 'Amount_Scaled', amount_n)
     # 기존 Time, Amount 피처 삭제
