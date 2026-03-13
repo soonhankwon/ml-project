@@ -21,6 +21,18 @@ print(card_df.shape)
 #     df_copy.drop('Time', axis=1, inplace=True)
 #     return df_copy
 
+from sklearn.preprocessing import StandardScaler
+# 사이킷런의 StandardScaler를 이용하여 정규분포 형태로 Amount 피처값 변환하는 로직으로 수정
+# def get_preprocessed_df(df=None):
+#     df_copy = df.copy()
+#     scaler = StandardScaler()
+#     amount_n = scaler.fit_transform(df_copy['Amount'].values.reshape(-1, 1))
+#     # 변환된 Amount를 Amount_Scaled로 피처명 변경후 DataFrame 맨 앞 컬럼으로 입력
+#     df_copy.insert(0, 'Amount_Scaled', amount_n)
+#     # 기존 Time, Amount 피처 삭제
+#     df_copy.drop(['Time', 'Amount'], axis=1, inplace=True)
+#     return df_copy
+
 def get_preprocessed_df(df=None):
     df_copy = df.copy()
     # 넘파이의 log1p()를 이용하여 Amount를 로그 변환
@@ -121,18 +133,6 @@ plt.figure(figsize=(8, 4))
 plt.xticks(range(0, 30000, 1000), rotation=60)
 sns.histplot(card_df['Amount'], bins=100, kde=True)
 # plt.show()
-
-from sklearn.preprocessing import StandardScaler
-# 사이킷런의 StandardScaler를 이용하여 정규분포 형태로 Amount 피처값 변환하는 로직으로 수정
-def get_preprocessed_df(df=None):
-    df_copy = df.copy()
-    scaler = StandardScaler()
-    amount_n = scaler.fit_transform(df_copy['Amount'].values.reshape(-1, 1))
-    # 변환된 Amount를 Amount_Scaled로 피처명 변경후 DataFrame 맨 앞 컬럼으로 입력
-    df_copy.insert(0, 'Amount_Scaled', amount_n)
-    # 기존 Time, Amount 피처 삭제
-    df_copy.drop(['Time', 'Amount'], axis=1, inplace=True)
-    return df_copy
 
 # Amount를 정규분포 형태로 변환 후 회귀 및 LightGBM 수행
 X_train, X_test, y_train, y_test = get_train_test_dataset(card_df)
