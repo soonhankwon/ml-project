@@ -174,6 +174,8 @@ print('이상치 데이터 인덱스:', outlier_index)
 이상치 데이터 인덱스: Index([8296, 8615, 9035, 9252], dtype='int64')
 """
 
+
+
 print('### 로지스틱 회귀 예측 성능 ###')
 lr_clf = LogisticRegression()
 get_model_train_eval(lr_clf, ftr_train=X_train, ftr_test=X_test, tgt_train=y_train, tgt_test=y_test)
@@ -181,3 +183,53 @@ get_model_train_eval(lr_clf, ftr_train=X_train, ftr_test=X_test, tgt_train=y_tra
 print('### LightGBM 예측 성능 ###')
 lgbm_clf = LGBMClassifier(n_estimators=1000, num_leaves=64, n_jobs=-1, boost_from_average=False)
 get_model_train_eval(lgbm_clf, ftr_train=X_train, ftr_test=X_test, tgt_train=y_train, tgt_test=y_test)
+
+from imblearn.over_sampling import SMOTE
+from sklearn.metrics import precision_recall_curve
+
+smote = SMOTE(random_state=0)
+X_train_over, y_train_over = smote.fit_resample(X_train, y_train)
+print('SMOTE 적용 전 학습용 피처/레이블 데이터 세트: ', X_train.shape, y_train.shape)
+print('SMOTE 적용 후 학습용 피처/레이블 데이터 세트: ', X_train_over.shape, y_train_over.shape)
+print('SMOTE 적용 후 레이블 값 분포: \n', pd.Series(y_train_over).value_counts())
+"""
+SMOTE 적용 전 학습용 피처/레이블 데이터 세트:  (199362, 29) (199362,)
+SMOTE 적용 후 학습용 피처/레이블 데이터 세트:  (398040, 29) (398040,)
+SMOTE 적용 후 레이블 값 분포: 
+ Class
+0    199020
+1    199020
+Name: count, dtype: int64
+"""
+
+lr_clf = LogisticRegression()
+get_model_train_eval(lr_clf, ftr_train=X_train_over, ftr_test=X_test, tgt_train=y_train_over, tgt_test=y_test)
+
+def precision_recall_curve_plot(y_test , pred_proba_c1):
+    # threshold ndarray와 이 threshold에 따른 정밀도, 재현율 ndarray 추출. 
+    precisions, recalls, thresholds = precision_recall_curve( y_test, pred_proba_c1)
+    
+    # X축을 threshold값으로, Y축은 정밀도, 재현율 값으로 각각 Plot 수행. 정밀도는 점선으로 표시
+    plt.figure(figsize=(8,6))
+    threshold_boundary = thresholds.shape[0]
+    plt.plot(thresholds, precisions[0:threshold_boundary], linestyle='--', label='precision')
+    plt.plot(thresholds, recalls[0:threshold_boundary],label='recall')
+    
+    # threshold 값 X 축의 Scale을 0.1 단위로 변경
+    start, end = plt.xlim()
+    plt.xticks(np.round(np.arange(start, end, 0.1),2))
+    
+    # x축, y축 label과 legend, 그리고 grid 설정
+    plt.xlabel('Threshold value'); plt.ylabel('Precision and Recall value')
+    plt.legend(); plt.grid()
+    plt.show()
+
+precision_recall_curve_plot(y_test, lr_clf.predict_proba(X_test)[:, 1])
+lgbm_clf = LGBMClassifier(n_estimators=1000, num_leaves=64, n_jobs=-1, boost_from_average=False)
+get_model_train_eval(lgbm_clf, ftr_train=X_train_over, ftr_test=X_test, tgt_train=y_train_over, tgt_test=y_test)
+"""
+오차 행렬
+[[83071  2224]
+ [   14   132]]
+정확도: 0.9738, 정밀도: 0.0560, 재현율: 0.9041, F1: 0.1055, AUC: 0.9684
+"""
