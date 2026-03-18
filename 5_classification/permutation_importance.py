@@ -16,6 +16,7 @@ r2 score: 0.35666753229394244
 """
 
 from sklearn.inspection import permutation_importance
+
 r = permutation_importance(model, X_val, y_val, n_repeats=30, random_state=0)
 
 # 가장 평균 permutation importance가 높은 순으로 내림차순 정렬 후 평균 permutation importance값과 표준 편차 출력
