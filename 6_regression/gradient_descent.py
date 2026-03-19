@@ -79,3 +79,33 @@ Gradient Descent Total Cost:0.9935
 plt.scatter(X, y)
 plt.plot(X, y_pred)
 plt.show()
+
+# 미니 배치 확률적 경사 하강법을 이요한 최적 비용함수 도출
+def stochastic_gradient_descent_steps(X, y, batch_size=10, iters=1000):
+    w0 = np.zeros((1,1))
+    w1 = np.zeros((1,1))
+    prev_cost = 100000
+    iter_index = 0
+
+    for ind in range(iters):
+        np.random.seed(ind)
+        # 전체 X, y 데이터에서 랜덤하게 batch_size만큼 데이터 추출하여 sample_X, sample_y로 저장
+        stochastic_random_index = np.random.permutation(X.shape[0])
+        sample_X = X[stochastic_random_index[0:batch_size]]
+        sample_y = y[stochastic_random_index[0:batch_size]]
+
+        # 랜덤하게 batch_size만큼 추출된 데이터 기반으로 w1_update, w0_update 계산후 업데이트
+        w1_update, w0_update = get_weight_updates(w1, w0, sample_X, sample_y, learning_rate=0.01)
+        w1 = w1 - w1_update
+        w0 = w0 - w0_update
+
+    return w1, w0
+
+w1, w0 = stochastic_gradient_descent_steps(X, y, iters=1000)
+print(f'w1: {w1[0,0]:.3f} w0: {w0[0,0]:.3f}')
+y_pred = w1[0,0] * X + w0
+print(f'Stochastic Gradient Descent Total Cost:{get_cost(y, y_pred):.4f}')
+"""
+w1: 4.028 w0: 6.156
+Stochastic Gradient Descent Total Cost:0.9937
+"""
