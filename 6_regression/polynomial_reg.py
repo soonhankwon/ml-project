@@ -71,3 +71,43 @@ print('Polynomial 회귀 계수\n', np.round(model.named_steps['linear'].coef_, 
 Polynomial 회귀 계수
  [0.   0.18 0.18 0.36 0.54 0.72 0.72 1.08 1.62 2.34]
 """
+
+import pandas as pd
+import seaborn as sns
+from sklearn.datasets import fetch_california_housing
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+
+housing = fetch_california_housing()
+caliDF = pd.DataFrame(housing.data, columns=housing.feature_names)
+
+caliDF['PRICE'] = housing.target
+y_target = caliDF['PRICE']
+X_data = caliDF.drop(['PRICE'], axis=1, inplace=False)
+X_train, X_test, y_train, y_test = train_test_split(X_data, y_target, test_size=0.3, random_state=156)
+
+p_model = Pipeline([
+    ('poly', PolynomialFeatures(degree=2, include_bias=False)), 
+    ('linear', LinearRegression())
+    ])
+
+p_model.fit(X_train, y_train)
+y_preds = p_model.predict(X_test)
+mse = mean_squared_error(y_test, y_preds)
+rmse = np.sqrt(mse)
+
+print(f'MSE: {mse:.3f}, RMSE: {rmse:.3f}')
+print(f'Variance score: {r2_score(y_test, y_preds):.3f}')
+"""
+MSE: 81.059, RMSE: 9.003
+Variance score: -59.454
+"""
+
+X_train_poly = PolynomialFeatures(degree=2, include_bias=False).fit_transform(X_train, y_train)
+print(X_train_poly.shape)
+print(X_train.shape)
+"""
+(14448, 44)
+(14448, 8)
+"""
