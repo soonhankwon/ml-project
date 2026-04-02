@@ -89,3 +89,8 @@ avg_rmse = np.mean(rmse_scores)
 print(' 5 folds 의 개별 Negative MSE scores:', np.round(neg_mse_scores, 2))
 print(' 5 folds 의 개별 RMSE scores:', np.round(rmse_scores, 2))
 print(f' 5 folds 의 평균 RMSE: {avg_rmse:.3f}')
+"""
+ 5 folds 의 개별 Negative MSE scores: [-0.48 -0.62 -0.65 -0.54 -0.49]
+ 5 folds 의 개별 RMSE scores: [0.7  0.79 0.8  0.74 0.7 ]
+ 5 folds 의 평균 RMSE: 0.746
+"""
