@@ -48,9 +48,44 @@ y_preds = lr.predict(X_test)
 mse = mean_squared_error(y_test, y_preds)
 rmse= np.sqrt(mse)
 
-print(f'MSE: {mse:.3f} ,RMSE: {rmse:.3f}')
+print(f'MSE: {mse:.3f}, RMSE: {rmse:.3f}')
 print(f'Variance score: {r2_score(y_test, y_preds):.3f}')
+print('절편 값:', lr.intercept_)
+print('회귀 계수값:', np.round(lr.coef_, 1))
 """
-MSE: 0.543 ,RMSE: 0.737
+MSE: 0.543, RMSE: 0.737
 Variance score: 0.595
+절편 값: -37.23905305294159
+회귀 계수값: [ 0.4  0.  -0.1  0.6 -0.  -0.  -0.4 -0.4]
 """
+
+# 회귀 계수를 큰 값 순으로 정렬하기 위해 Series로 생성. index가 컬럼명에 유의
+coeff = pd.Series(data=np.round(lr.coef_, 1), index=X_data.columns)
+print(coeff.sort_values(ascending=False))
+"""
+AveBedrms     0.6
+MedInc        0.4
+HouseAge      0.0
+Population   -0.0
+AveOccup     -0.0
+AveRooms     -0.1
+Latitude     -0.4
+Longitude    -0.4
+dtype: float64
+"""
+
+from sklearn.model_selection import cross_val_score
+
+y_target = caliDF['PRICE']
+X_data = caliDF.drop(['PRICE'], axis=1, inplace=False)
+lr = LinearRegression()
+
+# cross_val_score()로 5 Fold 셋으로 MSE를 구한 뒤 이를 기반으로 다시 RMSE 구함
+neg_mse_scores = cross_val_score(lr, X_data, y_target, scoring="neg_mean_squared_error", cv=5)
+rmse_scores = np.sqrt(-1 * neg_mse_scores)
+avg_rmse = np.mean(rmse_scores)
+
+# cross_val_score(scoring="neg_mean_squared_error")로 반환된 값은 모두 음수
+print(' 5 folds 의 개별 Negative MSE scores:', np.round(neg_mse_scores, 2))
+print(' 5 folds 의 개별 RMSE scores:', np.round(rmse_scores, 2))
+print(f' 5 folds 의 평균 RMSE: {avg_rmse:.3f}')
