@@ -65,4 +65,20 @@ for pos, alpha in enumerate(alphas):
     axs[pos].set_xlim(-3, 6)
     sns.barplot(x=coeff.values, y=coeff.index, ax=axs[pos])
 
-plt.show()
+# plt.show()
+
+# alpha값에 따른 컬럼별 회귀계수 출력
+ridge_alphas = [0 , 0.1 , 1 , 10 , 100]
+sort_column = 'alpha:'+str(ridge_alphas[0])
+print(coeff_df.sort_values(by=sort_column, ascending=False))
+"""
+             alpha:0  alpha:0.1   alpha:1  alpha:10  alpha:100
+AveBedrms   0.645066   0.644965  0.644062  0.635174   0.558249
+MedInc      0.436693   0.436683  0.436594  0.435719   0.428210
+HouseAge    0.009436   0.009436  0.009437  0.009452   0.009592
+Population -0.000004  -0.000004 -0.000004 -0.000004  -0.000003
+AveOccup   -0.003787  -0.003787 -0.003786 -0.003785  -0.003773
+AveRooms   -0.107322  -0.107303 -0.107133 -0.105456  -0.091012
+Latitude   -0.421314  -0.421313 -0.421299 -0.421156  -0.419061
+Longitude  -0.434514  -0.434511 -0.434485 -0.434217  -0.430993
+"""
