@@ -62,3 +62,6 @@ lr_clf = LogisticRegression()
 grid_clf = GridSearchCV(lr_clf, param_grid=param_grid, scoring='accuracy', cv=3)
 grid_clf.fit(data_scaled, cancer.target)
 print(f'최적 하이퍼 파라미터:{grid_clf.best_params_}, 최적 평균 정확도:{grid_clf.best_score_:.3f}')
+"""
+최적 하이퍼 파라미터:{'C': 0.1, 'l1_ratio': 0, 'solver': 'liblinear'}, 최적 평균 정확도:0.979
+"""
