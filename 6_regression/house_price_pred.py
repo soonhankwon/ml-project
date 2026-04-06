@@ -48,6 +48,7 @@ Electrical         1
 dtype: int64
 """
 
+# SalePrice skew 확인
 plt.title('Original Sale Price Histogram')
 plt.xticks(rotation=15)
 sns.histplot(house_df['SalePrice'], kde=True)
@@ -66,17 +67,12 @@ house_df['SalePrice'] = np.log1p(house_df['SalePrice'])
 house_df.drop(['Id','PoolQC' , 'MiscFeature', 'Alley', 'Fence', 'FireplaceQu'], axis=1, inplace=True)
 # 숫자형 Null은 평균으로 대체 (문자열 컬럼은 mean 불가 → numeric_only)
 house_df = house_df.fillna(house_df.mean(numeric_only=True))
-# 범주형/문자열 Null은 최빈값으로 대체
-for col in house_df.select_dtypes(exclude=np.number).columns:
-    if house_df[col].isnull().any():
-        mode_val = house_df[col].mode()
-        if not mode_val.empty:
-            house_df[col] = house_df[col].fillna(mode_val.iloc[0])
 
 # Null값이 있는 피처명과 타입을 추출
 null_column_count = house_df.isnull().sum()[house_df.isnull().sum() > 0]
 print('## Null 피처의 Type:\n', house_df.dtypes[null_column_count.index])
 
+# one-hot encoding: get_dummies() -> null값을 반영하여 자동 원-핫 인코딩 수행
 print('get_dummies() 수행 전 데이터 Shape:', house_df.shape)
 house_df_ohe = pd.get_dummies(house_df)
 print('get_dummies() 수행 후 데이터 Shape:', house_df_ohe.shape)
@@ -86,9 +82,22 @@ print('## Null 피처의 Type:\n', house_df_ohe.dtypes[null_column_count.index])
 
 """
 ## Null 피처의 Type:
- Series([], dtype: object)
+ MasVnrType      str
+BsmtQual        str
+BsmtCond        str
+BsmtExposure    str
+BsmtFinType1    str
+BsmtFinType2    str
+Electrical      str
+GarageType      str
+GarageFinish    str
+GarageQual      str
+GarageCond      str
+dtype: object
+
 get_dummies() 수행 전 데이터 Shape: (1460, 75)
 get_dummies() 수행 후 데이터 Shape: (1460, 270)
+
 ## Null 피처의 Type:
  Series([], dtype: object)
 """
