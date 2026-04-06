@@ -164,12 +164,72 @@ def visualize_coefficient(models):
       coef_concat = pd.concat([coef_high, coef_low])
       # 순차적으로 ax subplot에 barchar로 표현. 한 화면에 표현하기 위해 tick label 위치와 font 크기 조정
       axs[i_num].set_title(model.__class__.__name__+' Coeffiecents', size=25)
-      axs[i_num].tick_params(axis='y', direction='in', pad=-120)
-      for label in (axs[i_num].get_xticklabels() + axs[i_num].get_yticklabels()):
-         label.set_fontsize(22)
-         sns.barplot(x=coef_concat.values, y=coef_concat.index , ax=axs[i_num])
+      sns.barplot(x=coef_concat.values, y=coef_concat.index , ax=axs[i_num])
 
 # 앞 예제에서 학습한 lr_reg, ridge_reg, lasso_reg 모델 회귀 계수 시각화
 models = [lr_reg, ridge_reg, lasso_reg]
 visualize_coefficient(models)
 plt.show()
+
+# 5 Fold 교차검증으로 모델별로 RMSE와 평균 RMSE 출력
+from sklearn.model_selection import cross_val_score
+
+def get_avg_rmse_cv(models):
+   for model in models:
+      # 분할하지 않고 전체 데이터로 cross_val_score() 수행. 모델별 CV RMSE값과 평균 RMSE 출력
+      rmse_list = np.sqrt(-cross_val_score(model, X_features, y_target, scoring="neg_mean_squared_error", cv=5))
+      rmse_avg = np.mean(rmse_list)
+      print(f'\n{model.__class__.__name__} CV RMSE 값 리스트: {np.round(rmse_list, 3)}')
+      print(f' {model.__class__.__name__} CV 평균 RMSE 값: {np.round(rmse_avg, 3)}')
+
+# 앞 예제에서 학습한 ridge_reg, lasso_reg 모델의 CV RMSE값 출력
+models = [ridge_reg, lasso_reg]
+get_avg_rmse_cv(models)
+"""
+Ridge CV RMSE 값 리스트: [0.117 0.154 0.142 0.117 0.189]
+ Ridge CV 평균 RMSE 값: 0.144
+
+Lasso CV RMSE 값 리스트: [0.161 0.204 0.177 0.181 0.265]
+ Lasso CV 평균 RMSE 값: 0.198
+"""
+
+# 각 모델들의 alpha값을 변경하면서 하이퍼 파라미터 튜닝 후 다시 재학습/예측/평가
+from sklearn.model_selection import GridSearchCV
+
+def print_best_params(model, params):
+   grid_model = GridSearchCV(model, param_grid=params, scoring="neg_mean_squared_error", cv=5)
+   grid_model.fit(X_features, y_target)
+   rmse = np.sqrt(-1 * grid_model.best_score_)
+   print(f'{model.__class__.__name__} 5 CV 시 최적 평균 RMSE 값: {np.round(rmse, 4)}, 최적 alpha: {grid_model.best_params_}')
+
+   return grid_model.best_estimator_
+
+ridge_params = { 'alpha':[0.05, 0.1, 1, 5, 8, 10, 12, 15, 20] }
+lasso_params = { 'alpha':[0.001, 0.005, 0.008, 0.05, 0.03, 0.1, 0.5, 1,5, 10] }
+best_ridge = print_best_params(ridge_reg, ridge_params)
+best_lasso = print_best_params(lasso_reg, lasso_params)
+"""
+Ridge 5 CV 시 최적 평균 RMSE 값: 0.1418, 최적 alpha: {'alpha': 12}
+Lasso 5 CV 시 최적 평균 RMSE 값: 0.142, 최적 alpha: {'alpha': 0.001}
+"""
+
+# 앞의 최적화 alpha값으로 학습데이터로 학습, 테스트 데이터로 예측 및 평가 수행. 
+lr_reg = LinearRegression()
+lr_reg.fit(X_train, y_train)
+ridge_reg = Ridge(alpha=12)
+ridge_reg.fit(X_train, y_train)
+lasso_reg = Lasso(alpha=0.001)
+lasso_reg.fit(X_train, y_train)
+
+# 모든 모델의 RMSE 출력
+models = [lr_reg, ridge_reg, lasso_reg]
+get_rmses(models)
+
+# 모든 모델의 회귀 계수 시각화 
+models = [lr_reg, ridge_reg, lasso_reg]
+visualize_coefficient(models)
+"""
+LinearRegression 로그 변환된 RMSE: 0.132
+Ridge 로그 변환된 RMSE: 0.124
+Lasso 로그 변환된 RMSE: 0.12
+"""
