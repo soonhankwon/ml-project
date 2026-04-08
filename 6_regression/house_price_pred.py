@@ -1,3 +1,4 @@
+from re import S
 import pandas as pd
 import numpy as np
 import seaborn as sns
@@ -228,8 +229,90 @@ get_rmses(models)
 # 모든 모델의 회귀 계수 시각화 
 models = [lr_reg, ridge_reg, lasso_reg]
 visualize_coefficient(models)
+
+from scipy.stats import skew
+# 숫자 피처들에 대한 데이터 분포 왜곡도 확인 후 높은 왜곡도를 가지는 피처 추출
+# object가 아닌 숫자형 피처의 컬럼 index 객체 추출
+features_index = house_df.dtypes[house_df.dtypes != 'str'].index
+# house_df에 컬럼 index를 []로 입력하면 해당하는 컬럼 데이터셋 반환 apply lambda로 skew() 호출
+skew_features = house_df[features_index].apply(lambda x: skew(x))
+# skew(왜곡) 정도가 1이상인 컬럼만 추출
+skew_features_top = skew_features[skew_features > 1]
+print(skew_features_top.sort_values(ascending=False))
+
 """
+MiscVal          24.451640
+PoolArea         14.813135
+LotArea          12.195142
+3SsnPorch        10.293752
+LowQualFinSF      9.002080
+KitchenAbvGr      4.483784
+BsmtFinSF2        4.250888
+ScreenPorch       4.117977
+BsmtHalfBath      4.099186
+EnclosedPorch     3.086696
+MasVnrArea        2.673661
+LotFrontage       2.382499
+OpenPorchSF       2.361912
+BsmtFinSF1        1.683771
+WoodDeckSF        1.539792
+TotalBsmtSF       1.522688
+MSSubClass        1.406210
+1stFlrSF          1.375342
+GrLivArea         1.365156
+dtype: float64
+"""
+
+house_df[skew_features_top.index] = np.log1p(house_df[skew_features_top.index])
+
+# Skew가 높은 피처들을 로그 변환했으므로 다시 원-핫 인코딩 적용 및 피처/타겟 데이터셋 생성
+house_df_ohe = pd.get_dummies(house_df)
+y_target = house_df_ohe['SalePrice']
+X_features = house_df_ohe.drop('SalePrice', axis=1, inplace=False)
+X_train, X_test, y_train, y_test = train_test_split(X_features, y_target, test_size=0.2, random_state=156)
+
+# 피처들을 로그 변환 후 다시 최적 하이퍼파라미터와 RMSE 출력
+ridge_params = { 'alpha':[0.05, 0.1, 1, 5, 8, 10, 12, 15, 20] }
+lasso_params = { 'alpha':[0.001, 0.005, 0.008, 0.05, 0.03, 0.1, 0.5, 1,5, 10] }
+best_ridge = print_best_params(ridge_reg, ridge_params)
+best_lasso = print_best_params(lasso_reg, lasso_params)
+
+# 앞의 최적 alpha값으로 학습데이터 학습, 테스트 데이터로 예측 및 평가 수행
+lr_reg = LinearRegression()
+lr_reg.fit(X_train, y_train)
+ridge_reg = Ridge(alpha=10)
+ridge_reg.fit(X_train, y_train)
+lasso_reg = Lasso(alpha=0.001)
+lasso_reg.fit(X_train, y_train)
+
+# 모든 모델의 RMSE 출력
+models = [lr_reg, ridge_reg, lasso_reg]
+get_rmses(models)
+
+# 모든 모델의 회귀 계수 시각화 
+models = [lr_reg, ridge_reg, lasso_reg]
+visualize_coefficient(models)
+
+"""
+LinearRegression 로그 변환된 RMSE: 0.132
+Ridge 로그 변환된 RMSE: 0.127
+Lasso 로그 변환된 RMSE: 0.176
+
+Ridge CV RMSE 값 리스트: [0.117 0.154 0.142 0.117 0.189]
+ Ridge CV 평균 RMSE 값: 0.144
+
+Lasso CV RMSE 값 리스트: [0.161 0.204 0.177 0.181 0.265]
+ Lasso CV 평균 RMSE 값: 0.198
+Ridge 5 CV 시 최적 평균 RMSE 값: 0.1418, 최적 alpha: {'alpha': 12}
+Lasso 5 CV 시 최적 평균 RMSE 값: 0.142, 최적 alpha: {'alpha': 0.001}
+
 LinearRegression 로그 변환된 RMSE: 0.132
 Ridge 로그 변환된 RMSE: 0.124
 Lasso 로그 변환된 RMSE: 0.12
+
+Ridge 5 CV 시 최적 평균 RMSE 값: 0.1275, 최적 alpha: {'alpha': 10}
+Lasso 5 CV 시 최적 평균 RMSE 값: 0.1252, 최적 alpha: {'alpha': 0.001}
+LinearRegression 로그 변환된 RMSE: 0.128
+Ridge 로그 변환된 RMSE: 0.122
+Lasso 로그 변환된 RMSE: 0.119
 """
