@@ -316,3 +316,61 @@ LinearRegression 로그 변환된 RMSE: 0.128
 Ridge 로그 변환된 RMSE: 0.122
 Lasso 로그 변환된 RMSE: 0.119
 """
+
+# 이상치 제거
+# 이상치 데이터 검출을 위해 주요피처인 GrLivArea값에 대한 산점도 확인
+plt.scatter(x = house_df_org['GrLivArea'], y = house_df_org['SalePrice'])
+plt.ylabel('SalePrice', fontsize=15)
+plt.xlabel('GrLivArea', fontsize=15)
+plt.show()
+
+# GrLivArea와 SalePrice 모두 로그 변환되었으므로 이를 반영한 조건 생성
+cond1 = house_df_ohe['GrLivArea'] > np.log1p(4000)
+cond2 = house_df_ohe['SalePrice'] < np.log1p(500000)
+outlier_index = house_df_ohe[cond1 & cond2].index
+
+print('아웃라이어 레코드 index:', outlier_index.values)
+print('아웃라이어 삭제전 house_df_ohe shape:', house_df_ohe.shape)
+# DataFrame의 index를 이용하여 아웃라이어 레코드 삭제
+house_df_ohe.drop(outlier_index, axis=0, inplace=True)
+print('아웃라이어 삭제후 house_df_ohe shape:', house_df_ohe.shape)
+"""
+아웃라이어 레코드 index: [ 523 1298]
+아웃라이어 삭제전 house_df_ohe shape: (1460, 270)
+아웃라이어 삭제후 house_df_ohe shape: (1458, 270)
+"""
+
+y_target = house_df_ohe['SalePrice']
+X_features = house_df_ohe.drop('SalePrice',axis=1, inplace=False)
+X_train, X_test, y_train, y_test = train_test_split(X_features, y_target, test_size=0.2, random_state=156)
+
+ridge_params = { 'alpha':[0.05, 0.1, 1, 5, 8, 10, 12, 15, 20] }
+lasso_params = { 'alpha':[0.001, 0.005, 0.008, 0.05, 0.03, 0.1, 0.5, 1,5, 10] }
+best_ridge = print_best_params(ridge_reg, ridge_params)
+best_lasso = print_best_params(lasso_reg, lasso_params)
+
+"""
+Ridge 5 CV 시 최적 평균 RMSE 값: 0.1125, 최적 alpha: {'alpha': 8}
+Lasso 5 CV 시 최적 평균 RMSE 값: 0.1122, 최적 alpha: {'alpha': 0.001}
+"""
+
+# 앞의 최적화 alpha값으로 학습데이터로 학습, 테스트 데이터로 예측 및 평가 수행. 
+lr_reg = LinearRegression()
+lr_reg.fit(X_train, y_train)
+ridge_reg = Ridge(alpha=8)
+ridge_reg.fit(X_train, y_train)
+lasso_reg = Lasso(alpha=0.001)
+lasso_reg.fit(X_train, y_train)
+
+# 모든 모델의 RMSE 출력
+models = [lr_reg, ridge_reg, lasso_reg]
+get_rmses(models)
+
+# 모든 모델의 회귀 계수 시각화 
+models = [lr_reg, ridge_reg, lasso_reg]
+visualize_coefficient(models)
+"""
+LinearRegression 로그 변환된 RMSE: 0.129
+Ridge 로그 변환된 RMSE: 0.103
+Lasso 로그 변환된 RMSE: 0.1
+"""
