@@ -50,6 +50,7 @@ memory usage: 5.3 MB
 None
 """
 
+# 피처간 상관도 시각화
 import seaborn as sns
 import matplotlib.pyplot as plt
 
@@ -61,8 +62,8 @@ plt.show()
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
-#BILL_AMT1 ~ BILL_AMT6 까지 6개의 속성명 생성
-cols_bill = ['BILL_AMT'+str(i) for i in range(1,7)]
+# BILL_AMT1 ~ BILL_AMT6 까지 6개의 속성명 생성
+cols_bill = ['BILL_AMT' + str(i) for i in range(1,7)]
 cols_pay = ['PAY_' + str(i) for i in range(1, 7)]
 cols_amt = ['PAY_AMT' + str(i) for i in range(1, 7)]
 print(cols_bill)
@@ -87,4 +88,36 @@ pca.fit(df_cols_scaled)
 print('PCA Component별 변동성:', pca.explained_variance_ratio_)
 """
 PCA Component별 변동성: [0.36180187 0.20618472]
+"""
+
+import numpy as np
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score
+
+rcf = RandomForestClassifier(n_estimators=300, random_state=156)
+scores = cross_val_score(rcf, X_features, y_target, scoring='accuracy', cv=3)
+
+print('CV=3 인 경우의 개별 Fold 세트별 정확도:', scores)
+print(f'평균 정확도:{np.mean(scores):.4f}')
+
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+
+# 원본 데이터셋에 먼저 StandardScaler 적용
+scaler = StandardScaler()
+df_scaled = scaler.fit_transform(X_features)
+
+# 6개의 Component를 가진 PCA 변환을 수행하고 cross_val_score()로 분류 예측 수행
+pca = PCA(n_components=6)
+df_pca = pca.fit_transform(df_scaled)
+scores_pca = cross_val_score(rcf, df_pca, y_target, scoring='accuracy', cv=3)
+
+print('CV=3 인 경우의 PCA 변환된 개별 Fold 세트별 정확도:', scores_pca)
+print(f'PCA 변환 데이터셋 평균 정확도:{np.mean(scores_pca):.4f}')
+"""
+CV=3 인 경우의 개별 Fold 세트별 정확도: [0.808  0.8214 0.824 ]
+평균 정확도:0.8178
+
+CV=3 인 경우의 PCA 변환된 개별 Fold 세트별 정확도: [0.7904 0.7972 0.8028]
+PCA 변환 데이터셋 평균 정확도:0.7968
 """
