@@ -130,3 +130,61 @@ Truncated SVD로 분해 후 복원 행렬:
  [0.83806144 0.78847467 0.93868685 0.72673231 0.6740867  0.73812389]
  [0.59726589 0.47953891 0.56613544 0.80746028 0.13135039 0.03479656]]
 """
+
+# 사이킷런 TruncatedSVD 클래스를 이용한 변환
+from sklearn.decomposition import TruncatedSVD, PCA
+from sklearn.datasets import load_iris
+import matplotlib.pyplot as plt
+
+iris = load_iris()
+iris_ftrs = iris.data
+
+# 2개의 주요 component로 TruncatedSVD 변환
+tsvd = TruncatedSVD(n_components=2)
+tsvd.fit(iris_ftrs)
+iris_tsvd = tsvd.transform(iris_ftrs)
+
+# Scatter plot 2차원으로 TruncatedSVD 변환된 데이터 표현, 품종은 색깔로 구분
+plt.scatter(x=iris_tsvd[:, 0], y=iris_tsvd[:, 1], c=iris.target)
+plt.xlabel('TruncatedSVD Component 1')
+plt.ylabel('TruncatedSVD Component 2')
+plt.show()
+
+from sklearn.preprocessing import StandardScaler
+
+# iris 데이터를 StandardScaler로 변환
+scaler = StandardScaler()
+iris_scaled = scaler.fit_transform(iris_ftrs)
+
+# 스케일링된 데이터를 기반으로 TruncatedSVD 변환 수행
+tsvd = TruncatedSVD(n_components=2)
+tsvd.fit(iris_scaled)
+iris_tsvd = tsvd.transform(iris_scaled)
+
+# 스케일링된 데이터를 기반으로 PCA 변환 수행
+pca = PCA(n_components=2)
+pca.fit(iris_scaled)
+iris_pca = pca.transform(iris_scaled)
+
+# TruncatedSVD 변환 데이터를 왼쪽에, PCA 변환데이터를 오른쪽에 표현
+fig, (ax1, ax2) = plt.subplots(figsize=(9,4), ncols=2)
+ax1.scatter(x=iris_tsvd[:,0], y= iris_tsvd[:,1], c= iris.target)
+ax2.scatter(x=iris_pca[:,0], y= iris_pca[:,1], c= iris.target)
+ax1.set_title('Truncated SVD Transformed')
+ax2.set_title('PCA Transformed')
+plt.show()
+
+# NMF
+from sklearn.decomposition import NMF
+from sklearn.datasets import load_iris
+
+iris = load_iris()
+iris_ftrs = iris.data
+nmf = NMF(n_components=2)
+
+nmf.fit(iris_ftrs)
+iris_nmf = nmf.transform(iris_ftrs)
+plt.scatter(x=iris_nmf[:,0], y= iris_nmf[:,1], c= iris.target)
+plt.xlabel('NMF Component 1')
+plt.ylabel('NMF Component 2')
+plt.show()
