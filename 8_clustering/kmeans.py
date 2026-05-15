@@ -92,7 +92,7 @@ from sklearn.datasets import make_blobs
 
 X, y = make_blobs(
     n_samples=200, n_features=2, centers=3, cluster_std=0.8, random_state=0
-)
+) # n_samples: 샘플 수, n_features: 특성 수, centers: 클러스터 수, cluster_std: 클러스터 표준편차, random_state: 랜덤 시드
 print(X.shape, y.shape)
 """
 (200, 2) (200,)
