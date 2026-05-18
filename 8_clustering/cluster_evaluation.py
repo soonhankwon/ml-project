@@ -1,4 +1,5 @@
 # 붓꽃데이터 셋을 이용한 클러스터 평가
+from re import I
 from sklearn.preprocessing import scale
 from sklearn.datasets import load_iris
 from sklearn.cluster import KMeans
@@ -31,7 +32,7 @@ average_score = silhouette_score(iris.data, irisDF['cluster'])
 print(f'붓꽃 데이터 셋 Silhouette Analysis Score:{average_score:.3f}')
 
 print(irisDF.head(3))
-irisDF.groupby('cluster')['silhouette_coeff'].mean()
+print(irisDF.groupby('cluster')['silhouette_coeff'].mean())
 """
 붓꽃 데이터 셋 Silhouette Analysis Score:0.551
    sepal_length  sepal_width  ...  cluster  silhouette_coeff
@@ -40,6 +41,17 @@ irisDF.groupby('cluster')['silhouette_coeff'].mean()
 2           4.7          3.2  ...        1          0.828797
 
 [3 rows x 6 columns]
+
+cluster
+0    0.422323
+1    0.797604
+2    0.436842
+Name: silhouette_coeff, dtype: float64
+"""
+
+print(irisDF['silhouette_coeff'].mean())
+"""
+0.5511916046195919
 """
 
 # 클러스터별 평균 실루엣 계수의 시각화를 통한 클러스터 개수 최적화 방법
