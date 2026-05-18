@@ -108,12 +108,15 @@ def visualize_silhouette(cluster_lists, X_features):
             
         axs[ind].axvline(x=sil_avg, color="red", linestyle="--")
 
-# make_blobs을 통해 clustering을 위한 4개의 클러스터 중심의 500개 2차원 데이터셋 생성  
+# make_blobs을 통해 clustering을 위한 4개의 클러스터 중심의 500개 2차원 데이터셋 생성
 from sklearn.datasets import make_blobs
 X, y = make_blobs(n_samples=500, n_features=2, centers=4, cluster_std=1, \
                   center_box=(-10.0, 10.0), shuffle=True, random_state=1)  
 
 # cluster 개수를 2개, 3개, 4개, 5개 일때의 클러스터별 실루엣 계수 평균값을 시각화 
+visualize_silhouette([2, 3, 4, 5], X)
+plt.show()
+
 from sklearn.datasets import load_iris
 
 iris=load_iris()
