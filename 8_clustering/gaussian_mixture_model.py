@@ -82,3 +82,55 @@ def visualize_cluster_plot(clusterobj, dataframe, label_name, iscenter=True):
     
     plt.legend(loc=legend_loc)
     plt.show()
+
+from sklearn.datasets import make_blobs
+
+# make_blobs()로 300개의 데이터셋, 3개의 cluser셋, cluster_std=0.5ㅇㄹ 만듬
+X, y = make_blobs(n_samples=300, n_features=2, centers=3, cluster_std=0.5, random_state=0)
+
+# 길게 늘어난 타원형의 데이터 셋을 생성하기 위해 변환함
+transformation = [[0.60834549, -0.63667341], [-0.40887718, 0.85253229]]
+X_aniso = np.dot(X, transformation)
+
+# feature 데이터셋과 make_blobs()의 y 결과값을 DataFrame으로 저장
+clusterDF = pd.DataFrame(data=X_aniso, columns=['ftr1', 'ftr2'])
+clusterDF['target'] = y
+
+# 생성된 데이터셋을 target별로 다른 marker로 표시하여 시각화
+visualize_cluster_plot(None, clusterDF, 'target', iscenter=False)
+
+# 3개의 cluster 기반 Kmeans를 X_aniso 데이터셋에 적용
+kmeans = KMeans(3, random_state=0)
+kmeans_label = kmeans.fit_predict(X_aniso)
+clusterDF['kmeans_label'] = kmeans_label
+
+visualize_cluster_plot(kmeans, clusterDF, 'kmeans_label', iscenter=True)
+
+# 3개의 n_components 기반 GMM을 X_aniso 데이터셋에 적용
+gmm = GaussianMixture(n_components=3, random_state=0)
+gmm_label = gmm.fit(X_aniso).predict(X_aniso)
+clusterDF['gmm_label'] = gmm_label
+
+# GaussianMixture는 cluster_centers_ 속성이 없으므로 iscenter를 False로 설정. 
+visualize_cluster_plot(gmm, clusterDF, 'gmm_label',iscenter=False)
+
+print('### KMeans Clustering ###')
+print(clusterDF.groupby('target')['kmeans_label'].value_counts())
+print('\n### Gaussian Mixture Clustering ###')
+print(clusterDF.groupby('target')['gmm_label'].value_counts())
+"""
+### KMeans Clustering ###
+target  kmeans_label
+0       2                73
+        0                27
+1       1               100
+2       0                86
+        2                14
+Name: count, dtype: int64
+
+### Gaussian Mixture Clustering ###
+target  gmm_label
+0       2            100
+1       1            100
+2       0            100
+"""
