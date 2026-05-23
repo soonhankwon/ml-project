@@ -14,6 +14,7 @@ feature_names = ['sepal_length', 'sepal_width', 'petal_length', 'petal_width']
 irisDF = pd.DataFrame(data=iris.data, columns=feature_names)
 irisDF['target'] = iris.target
 
+# Gaussian Mixture Model를 이용하여 붓꽃 데이터 군집화
 from sklearn.mixture import GaussianMixture
 
 gmm = GaussianMixture(n_components=3, random_state=0).fit(iris.data)
@@ -34,6 +35,7 @@ target  gmm_cluster
 Name: count, dtype: int64
 """
 
+# 붓꽃 데이터 K-Means 군집화 결과
 kmeans = KMeans(n_clusters=3, init='k-means++', max_iter=300,random_state=0).fit(iris.data)
 kmeans_cluster_labels = kmeans.predict(iris.data)
 irisDF['kmeans_cluster'] = kmeans_cluster_labels
@@ -50,7 +52,7 @@ Name: count, dtype: int64
 """
 
 # GMM과 K-Means의 비교
-### 클러스터 결과를 담은 DataFrame과 사이킷런의 Cluster 객체등을 인자로 받아 클러스터링 결과를 시각화하는 함수  
+### 클러스터 결과를 담은 DataFrame과 사이킷런의 Cluster 객체등을 인자로 받아 클러스터링 결과를 시각화하는 함수 
 def visualize_cluster_plot(clusterobj, dataframe, label_name, iscenter=True):
     if iscenter :
         centers = clusterobj.cluster_centers_
@@ -85,7 +87,8 @@ def visualize_cluster_plot(clusterobj, dataframe, label_name, iscenter=True):
 
 from sklearn.datasets import make_blobs
 
-# make_blobs()로 300개의 데이터셋, 3개의 cluser셋, cluster_std=0.5ㅇㄹ 만듬
+# GMM 군집화와 K-Means 군집화를 비교하기 위해 타원형으로 늘어선 임의의 데이터 세트를 생성
+# make_blobs()로 300개의 데이터셋, 3개의 cluser셋, cluster_std=0.5을 만듬
 X, y = make_blobs(n_samples=300, n_features=2, centers=3, cluster_std=0.5, random_state=0)
 
 # 길게 늘어난 타원형의 데이터 셋을 생성하기 위해 변환함
@@ -99,6 +102,7 @@ clusterDF['target'] = y
 # 생성된 데이터셋을 target별로 다른 marker로 표시하여 시각화
 visualize_cluster_plot(None, clusterDF, 'target', iscenter=False)
 
+# K-Means 군집화 수행
 # 3개의 cluster 기반 Kmeans를 X_aniso 데이터셋에 적용
 kmeans = KMeans(3, random_state=0)
 kmeans_label = kmeans.fit_predict(X_aniso)
@@ -106,11 +110,13 @@ clusterDF['kmeans_label'] = kmeans_label
 
 visualize_cluster_plot(kmeans, clusterDF, 'kmeans_label', iscenter=True)
 
+# GMM 군집화 수행
 # 3개의 n_components 기반 GMM을 X_aniso 데이터셋에 적용
 gmm = GaussianMixture(n_components=3, random_state=0)
 gmm_label = gmm.fit(X_aniso).predict(X_aniso)
 clusterDF['gmm_label'] = gmm_label
 
+# GMM과 K-Means 군집화 결과 비교
 # GaussianMixture는 cluster_centers_ 속성이 없으므로 iscenter를 False로 설정. 
 visualize_cluster_plot(gmm, clusterDF, 'gmm_label',iscenter=False)
 
