@@ -154,6 +154,7 @@ print(f'TF-IDF Vectorized Logistic Regression의 예측 정확도는 {accuracy_s
 TF-IDF Vectorized Logistic Regression의 예측 정확도는 0.692
 """
 
+# GridSearchCV로 LogisticRegression C 하이퍼 파라미터 튜닝
 from sklearn.model_selection import GridSearchCV, train_test_split
 
 # 가벼운 튜닝: 학습 샘플 일부(3000) + C 후보/CV 축소 → 찾은 C로 전체 데이터 재학습
