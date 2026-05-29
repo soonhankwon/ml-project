@@ -166,6 +166,10 @@ params = {'C': [0.1, 1, 10]}
 grid_cv_lr = GridSearchCV(lr_tune, param_grid=params, cv=2, scoring='accuracy')
 grid_cv_lr.fit(X_tune, y_tune)
 print('Logistic Regression best C parameter:', grid_cv_lr.best_params_)
+"""
+C(역수)): 규제강도 - 수가 클수록 규제가 약함
+Logistic Regression best C parameter: {'C': 10}
+"""
 
 lr_best = LogisticRegression(
     solver='saga', max_iter=100, C=grid_cv_lr.best_params_['C'], random_state=156
