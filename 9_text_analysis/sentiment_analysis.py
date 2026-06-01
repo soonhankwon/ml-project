@@ -1,5 +1,6 @@
 # 지도학습 기반 감성 분석 - IMDB 영화평
 
+from cmath import polar
 import pandas as pd
 review_df = pd.read_csv('./word2vec-nlp-tutorial/labeledTrainData.tsv', header=0, sep="\t", quoting=3)
 print(review_df.head(3))
@@ -85,6 +86,46 @@ submission = pd.DataFrame({
     'id': test_df['id'],
     'sentiment': submission_pipeline.predict(test_df['review']),
 })
-submission_path = f'{DATA_DIR}/tfidf_submission.csv'
-submission.to_csv(submission_path, index=False)
-print(f'캐글 제출 파일 생성 완료: {submission_path} ({len(submission)}건)')
+# submission_path = f'{DATA_DIR}/tfidf_submission.csv'
+# submission.to_csv(submission_path, index=False)
+# print(f'캐글 제출 파일 생성 완료: {submission_path} ({len(submission)}건)')
+
+# VADER lexicon을 이용한 Sentiment Analysis
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
+
+senti_analyzer = SentimentIntensityAnalyzer()
+senti_scores = senti_analyzer.polarity_scores(review_df['review'][0])
+print(senti_scores)
+"""
+{'neg': 0.13, 'neu': 0.743, 'pos': 0.127, 'compound': -0.7943}
+"""
+
+def vader_polarity(review, threshold=0.1):
+    analyzer = SentimentIntensityAnalyzer()
+    scores = analyzer.polarity_scores(review)
+    
+    # compound 값에 기반하여 threshold 입력값보다 크면 1, 그렇지 않으면 0을 반환
+    agg_score = scores['compound']
+    final_sentiment = 1 if agg_score >= threshold else 0
+    return final_sentiment
+
+# apply lambda 식을 이용하여 레코드별로 vader_polarity()를 수행하고 결과를 'vader_preds'에 저장
+review_df['vader_preds'] = review_df['review'].apply(lambda x: vader_polarity(x, 0.1))
+y_target = review_df['sentiment'].values
+vader_preds = review_df['vader_preds'].values
+
+print('### VADER 예측 성능 평가 ###')
+from sklearn.metrics import confusion_matrix, precision_score, recall_score
+
+print(confusion_matrix(y_target, vader_preds))
+print("정확도:", accuracy_score(y_target, vader_preds))
+print("정밀도:", precision_score(y_target, vader_preds))
+print("재현율:", recall_score(y_target, vader_preds))
+"""
+### VADER 예측 성능 평가 ###
+[[ 6744  5756]
+ [ 1858 10642]]
+정확도: 0.69544
+정밀도: 0.6489815831198926
+재현율: 0.85136
+"""
