@@ -83,3 +83,56 @@ Topic # 7
 use dos thanks windows using window does display help like problem server need know run
 """
 
+# 개별 문서별 토픽 분포 확인
+# LDA 객체의 transform()을 수행하면 개별 문서별 토픽 분포를 반환
+doc_topics = lda.transform(feat_vect)
+print(doc_topics.shape)
+print(doc_topics[:3])
+
+# 개별 문서별 토픽 분포도를 출력
+# 20news group으로 만들어진 문서명을 출력
+def get_filename_list(newsdata):
+    filename_list = []
+
+    for file in newsdata.filenames:
+        filename_temp = file.split('\\')[-2:]
+        filename = '.'.join(filename_temp)
+        filename_list.append(filename)
+
+    return filename_list
+
+filename_list = get_filename_list(news_df)
+print('filename 개수:', len(filename_list), 'filename list 10개만:', filename_list[:10])
+"""
+filename 개수: 7862 filename list 10개만: 
+['/Users/soon/scikit_learn_data/20news_home/20news-bydate-train/soc.religion.christian/20630', 
+'/Users/soon/scikit_learn_data/20news_home/20news-bydate-test/sci.med/59422', 
+'/Users/soon/scikit_learn_data/20news_home/20news-bydate-test/comp.graphics/38765', 
+'/Users/soon/scikit_learn_data/20news_home/20news-bydate-test/comp.graphics/38810', 
+'/Users/soon/scikit_learn_data/20news_home/20news-bydate-test/sci.med/59449', 
+'/Users/soon/scikit_learn_data/20news_home/20news-bydate-train/comp.graphics/38461', 
+'/Users/soon/scikit_learn_data/20news_home/20news-bydate-train/comp.windows.x/66959', 
+'/Users/soon/scikit_learn_data/20news_home/20news-bydate-train/rec.motorcycles/104487', 
+'/Users/soon/scikit_learn_data/20news_home/20news-bydate-train/sci.electronics/53875', 
+'/Users/soon/scikit_learn_data/20news_home/20news-bydate-train/sci.electronics/53617']
+"""
+
+# DataFrame으로 생성하여 문서별 토픽 분포도 확인
+import pandas as pd
+
+topic_names = ['Topic #' + str(i) for i in range(0, 8)]
+doc_topic_df = pd.DataFrame(data=doc_topics, columns=topic_names, index=filename_list)
+print(doc_topic_df.head(10))
+"""
+                                                   Topic #0  Topic #1  Topic #2  ...  Topic #5  Topic #6  Topic #7
+/Users/soon/scikit_learn_data/20news_home/20new...  0.013897  0.013944  0.013891  ...  0.013892  0.013935  0.434244
+/Users/soon/scikit_learn_data/20news_home/20new...  0.277504  0.181518  0.002121  ...  0.002121  0.002121  0.002121
+/Users/soon/scikit_learn_data/20news_home/20new...  0.005445  0.221666  0.005445  ...  0.005442  0.005442  0.745675
+/Users/soon/scikit_learn_data/20news_home/20new...  0.005439  0.005441  0.005449  ...  0.388387  0.005442  0.005442
+/Users/soon/scikit_learn_data/20news_home/20new...  0.006584  0.552000  0.006587  ...  0.006585  0.006588  0.006585
+/Users/soon/scikit_learn_data/20news_home/20new...  0.008342  0.008352  0.182622  ...  0.008341  0.008343  0.008351
+/Users/soon/scikit_learn_data/20news_home/20new...  0.372861  0.041667  0.377020  ...  0.041703  0.041667  0.041711
+/Users/soon/scikit_learn_data/20news_home/20new...  0.225351  0.674669  0.004814  ...  0.004812  0.004812  0.004810
+/Users/soon/scikit_learn_data/20news_home/20new...  0.008944  0.836686  0.008932  ...  0.109691  0.008932  0.008938
+/Users/soon/scikit_learn_data/20news_home/20new...  0.041733  0.041720  0.708081  ...  0.041669  0.041699  0.041686
+"""
