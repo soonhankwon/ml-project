@@ -4,8 +4,11 @@ from sklearn.linear_model import Ridge, LogisticRegression
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 import pandas as pd
+from pathlib import Path
 
-mercari_df = pd.read_csv('train.tsv', sep='\t')
+BASE_DIR = Path(__file__).resolve().parent
+
+mercari_df = pd.read_csv(BASE_DIR / 'train.tsv', sep='\t')
 print(mercari_df.shape)
 print(mercari_df.head(3))
 """
@@ -76,9 +79,13 @@ def split_cat(category_name):
     except:
         return ['Other_null', 'Other_null', 'Ohter_null']
 
+def add_category_columns(df):
+    df['cat_dae'], df['cat_jung'], df['cat_so'] = \
+    zip(*df['category_name'].apply(lambda x: split_cat(x)))
+    return df
+
 # 위의 split_cat()을 apply lambda에서 호출하여 대, 중, 소 컬럼을 mercari_df에 생성
-mercari_df['cat_dae'], mercari_df['cat_jung'], mercari_df['cat_so'] = \
-zip(*mercari_df['category_name'].apply(lambda x: split_cat(x)))
+mercari_df = add_category_columns(mercari_df)
 
 # 대분류만 값의 유형과 건수를 살펴보고, 중분류, 소분류는 값의 유형이 많으므로 분류 갯수만 추출
 print('대분류 유형 :\n', mercari_df['cat_dae'].value_counts())
@@ -103,9 +110,14 @@ Name: count, dtype: int64
 소분류 갯수 : 871
 """
 
-mercari_df['brand_name'] = mercari_df['brand_name'].fillna(value='Other_Null')
-mercari_df['category_name'] = mercari_df['category_name'].fillna(value='Other_Null')
-mercari_df['item_description'] = mercari_df['item_description'].fillna(value='Other_Null')
+def fill_missing_values(df):
+    df['name'] = df['name'].fillna(value='Other_Null')
+    df['brand_name'] = df['brand_name'].fillna(value='Other_Null')
+    df['category_name'] = df['category_name'].fillna(value='Other_Null')
+    df['item_description'] = df['item_description'].fillna(value='Other_Null')
+    return df
+
+mercari_df = fill_missing_values(mercari_df)
 
 # 각 컬럼별로 Null값 건수 확인.
 print(mercari_df.isnull().sum())
@@ -188,17 +200,22 @@ item_description vectorization shape: (1482535, 50000)
 from sklearn.preprocessing import OneHotEncoder
 import numpy as np
 
-oh_encoder = OneHotEncoder(sparse_output=True)
+oh_encoders = {}
+
+def fit_onehot(column_name):
+    encoder = OneHotEncoder(sparse_output=True, handle_unknown='ignore')
+    oh_encoders[column_name] = encoder
+    return encoder.fit_transform(mercari_df[[column_name]])
 
 # brand_name, item_condition_id, shipping 각 피처들을 희소 행렬 원-핫 인코딩 변환
-X_brand = oh_encoder.fit_transform(mercari_df[['brand_name']])
-X_item_cond_id = oh_encoder.fit_transform(mercari_df[['item_condition_id']])
-X_shipping = oh_encoder.fit_transform(mercari_df[['shipping']])
+X_brand = fit_onehot('brand_name')
+X_item_cond_id = fit_onehot('item_condition_id')
+X_shipping = fit_onehot('shipping')
 
 # cat_dae, cat_jung, cat_so 각 피처들을 희소 행렬 원-핫 인코딩 변환
-X_cat_dae = oh_encoder.fit_transform(mercari_df[['cat_dae']])
-X_cat_jung = oh_encoder.fit_transform(mercari_df[['cat_jung']])
-X_cat_so = oh_encoder.fit_transform(mercari_df[['cat_so']])
+X_cat_dae = fit_onehot('cat_dae')
+X_cat_jung = fit_onehot('cat_jung')
+X_cat_so = fit_onehot('cat_so')
 
 print(type(X_brand), type(X_item_cond_id), type(X_shipping))
 print(f'X_brand_shape:{X_brand.shape}, X_item_cond_id shape:{X_item_cond_id.shape}')
@@ -274,17 +291,67 @@ print('Item Description을 포함한 rmsle 값:',  evaluate_org_price(y_test ,li
 Item Description을 포함한 rmsle 값: 0.4681328386096162
 """
 
-# LightGBM 회귀모델 구축과 앙상블을 이용한 최종 예측 평가
-from lightgbm import LGBMRegressor
+def transform_test_features(test_df):
+    test_df = add_category_columns(test_df)
+    test_df = fill_missing_values(test_df)
 
-lgbm_model =LGBMRegressor(n_estimator=200, learning_rate=0.5, num_leaves=125, random_state=156)
-lgbm_preds, y_test = model_train_predict(model=lgbm_model, matrix_list=sparse_matrix_list)
-print('LightGBM rmsle 값:',  evaluate_org_price(y_test, lgbm_preds))
+    X_test_name = cnt_vec.transform(test_df['name'])
+    X_test_descp = tfidf_descp.transform(test_df['item_description'])
+    X_test_brand = oh_encoders['brand_name'].transform(test_df[['brand_name']])
+    X_test_item_cond_id = oh_encoders['item_condition_id'].transform(test_df[['item_condition_id']])
+    X_test_shipping = oh_encoders['shipping'].transform(test_df[['shipping']])
+    X_test_cat_dae = oh_encoders['cat_dae'].transform(test_df[['cat_dae']])
+    X_test_cat_jung = oh_encoders['cat_jung'].transform(test_df[['cat_jung']])
+    X_test_cat_so = oh_encoders['cat_so'].transform(test_df[['cat_so']])
 
-preds = lgbm_preds * 0.45 + linear_preds * 0.55
-print('LightGBM과 Ridge를 ensemble한 최종 rmsle 값:',  evaluate_org_price(y_test , preds))
-"""
-LightGBM rmsle 값: 0.46521224321921983
-LightGBM과 Ridge를 ensemble한 최종 rmsle 값: 0.45061360013035756
-"""
+    return hstack((
+        X_test_descp,
+        X_test_name,
+        X_test_brand,
+        X_test_item_cond_id,
+        X_test_shipping,
+        X_test_cat_dae,
+        X_test_cat_jung,
+        X_test_cat_so
+    )).tocsr()
+
+def make_ridge_submission(output_path='submission_ridge.csv'):
+    train_features = hstack(sparse_matrix_list).tocsr()
+    ridge_model = Ridge(solver='lsqr', fit_intercept=False)
+    ridge_model.fit(train_features, mercari_df['price'])
+
+    test_df = pd.read_csv(BASE_DIR / 'test.tsv', sep='\t')
+    test_features = transform_test_features(test_df)
+    predicted_log_prices = ridge_model.predict(test_features)
+    predicted_prices = np.expm1(predicted_log_prices)
+    predicted_prices = np.maximum(predicted_prices, 0)
+
+    submission = pd.DataFrame({
+        'test_id': test_df['test_id'],
+        'price': predicted_prices
+    })
+    submission.to_csv(BASE_DIR / output_path, index=False)
+    print(f'Ridge 제출 파일 생성 완료: {BASE_DIR / output_path}')
+
+    del train_features, test_features
+    gc.collect()
+
+make_ridge_submission()
+
+RUN_LIGHTGBM = False
+
+if RUN_LIGHTGBM:
+    # LightGBM 회귀모델 구축과 앙상블을 이용한 최종 예측 평가
+    from lightgbm import LGBMRegressor
+
+    lgbm_model =LGBMRegressor(n_estimator=200, learning_rate=0.5, num_leaves=125, random_state=156)
+    lgbm_preds, y_test = model_train_predict(model=lgbm_model, matrix_list=sparse_matrix_list)
+    print('LightGBM rmsle 값:',  evaluate_org_price(y_test, lgbm_preds))
+
+    preds = lgbm_preds * 0.45 + linear_preds * 0.55
+    print('LightGBM과 Ridge를 ensemble한 최종 rmsle 값:',  evaluate_org_price(y_test , preds))
+    """
+    LightGBM rmsle 값: 0.46521224321921983
+    LightGBM과 Ridge를 ensemble한 최종 rmsle 값: 0.45061360013035756
+    """
 
