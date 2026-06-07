@@ -12,7 +12,16 @@ from sklearn.preprocessing import OneHotEncoder
 
 KAGGLE_INPUT_DIR = Path('/kaggle/input/mercari-price-suggestion-challenge')
 KAGGLE_OUTPUT_DIR = Path('/kaggle/working')
-LOCAL_DIR = Path(__file__).resolve().parent
+
+
+def get_local_dir():
+    try:
+        return Path(__file__).resolve().parent
+    except NameError:
+        return Path.cwd()
+
+
+LOCAL_DIR = get_local_dir()
 
 INPUT_DIR = KAGGLE_INPUT_DIR if KAGGLE_INPUT_DIR.exists() else LOCAL_DIR
 OUTPUT_DIR = KAGGLE_OUTPUT_DIR if KAGGLE_OUTPUT_DIR.exists() else LOCAL_DIR
